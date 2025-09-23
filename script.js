@@ -27,6 +27,12 @@ let proveedores = [
 // Variable para el siguiente ID de proveedor
 let nextProviderId = Math.max(...proveedores.map(p => p.id)) + 1;
 
+// Datos de salidas registradas
+let salidas = [];
+
+// Variable para el siguiente ID de salida
+let nextOutputId = 1;
+
 /**
  * Calcula los días que un producto ha estado en stock
  * @param {string} fecha - Fecha en formato DD/MM/YYYY
@@ -499,6 +505,56 @@ function exportData() {
 }
 
 /**
+ * Exporta el historial de salidas a CSV
+ */
+function exportOutputsData() {
+    try {
+        if (salidas.length === 0) {
+            alert('No hay salidas registradas para exportar');
+            return;
+        }
+        
+        // BOM para UTF-8
+        let csv = '\uFEFF';
+        
+        // Encabezados
+        csv += 'FECHA,CODIGO,PRODUCTO,CANTIDAD,UNIDAD,RESPONSABLE,AREA_DESTINO,OBSERVACIONES,STOCK_ANTERIOR,STOCK_RESTANTE\n';
+        
+        salidas.forEach(salida => {
+            const fecha = (salida.fecha || '').replace(/"/g, '""');
+            const codigo = salida.codigo || '';
+            const nombre = (salida.nombre || '').replace(/"/g, '""');
+            const cantidad = salida.cantidad || 0;
+            const unidad = (salida.unidad || '').replace(/"/g, '""');
+            const responsable = (salida.responsable || '').replace(/"/g, '""');
+            const areaDestino = (salida.areaDestino || '').replace(/"/g, '""');
+            const observaciones = (salida.observaciones || '').replace(/"/g, '""');
+            const stockAnterior = salida.stockAnterior || 0;
+            const stockRestante = salida.stockRestante || 0;
+            
+            csv += `"${fecha}",${codigo},"${nombre}",${cantidad},"${unidad}","${responsable}","${areaDestino}","${observaciones}",${stockAnterior},${stockRestante}\n`;
+        });
+        
+        // Descargar archivo
+        const fechaActual = new Date().toISOString().split('T')[0];
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `salidas_inventario_${fechaActual}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        alert('✅ Historial de salidas exportado exitosamente a CSV');
+    } catch (error) {
+        console.error('Error al exportar salidas:', error);
+        alert('❌ Error al exportar las salidas. Verifica la consola para más detalles.');
+    }
+}
+
+/**
  * Guarda los datos en localStorage
  */
 function saveToLocalStorage() {
@@ -944,6 +1000,7 @@ function initializeApp() {
     // Cargar datos guardados
     loadFromLocalStorage();
     loadProvidersFromLocalStorage();
+    loadOutputsFromLocalStorage();
     
     // Renderizar tabla inicial
     renderTable();
@@ -1020,6 +1077,357 @@ function initializeApp() {
     });
     
     console.log('Sistema de Inventario inicializado correctamente');
+}
+
+// ===== FUNCIONES PARA EL MANEJO DE SALIDAS =====
+
+/**
+ * Alterna la visibilidad del formulario de registro de salidas
+ */
+function toggleOutputForm() {
+    const outputForm = document.getElementById('outputForm');
+    const addForm = document.getElementById('addForm');
+    const providerSection = document.getElementById('providerSection');
+    
+    if (!outputForm) return;
+    
+    // Cerrar otros formularios
+    if (addForm && !addForm.classList.contains('hidden')) {
+        addForm.classList.add('hidden');
+    }
+    if (providerSection && !providerSection.classList.contains('hidden')) {
+        providerSection.classList.add('hidden');
+    }
+    
+    // Alternar formulario de salidas
+    if (outputForm.classList.contains('hidden')) {
+        outputForm.classList.remove('hidden');
+        updateOutputProductSelect();
+        clearOutputForm();
+    } else {
+        outputForm.classList.add('hidden');
+    }
+}
+
+/**
+ * Actualiza el select de productos para salidas
+ */
+function updateOutputProductSelect() {
+    const select = document.getElementById('outputProductSelect');
+    if (!select) return;
+    
+    // Limpiar opciones existentes (excepto la primera)
+    select.innerHTML = '<option value="">Seleccionar producto...</option>';
+    
+    // Agregar productos con stock disponible
+    inventario.forEach(item => {
+        if (item.cantidad > 0) {
+            const option = document.createElement('option');
+            option.value = item.codigo;
+            option.textContent = `${item.nombre} (${item.cantidad} ${item.unidad}) - Código: ${item.codigo}`;
+            select.appendChild(option);
+        }
+    });
+}
+
+/**
+ * Actualiza la información del producto seleccionado en el formulario de salidas
+ */
+function updateOutputProductInfo() {
+    const select = document.getElementById('outputProductSelect');
+    const infoRow = document.getElementById('outputProductInfoRow');
+    const infoDiv = document.getElementById('outputProductInfo');
+    
+    if (!select || !infoRow || !infoDiv) return;
+    
+    const codigo = parseInt(select.value);
+    if (!codigo) {
+        infoRow.style.display = 'none';
+        return;
+    }
+    
+    const producto = inventario.find(item => item.codigo === codigo);
+    if (!producto) return;
+    
+    const stockActual = producto.cantidad;
+    const stockMinimo = producto.cantidadMinima;
+    const alertaStock = stockActual <= stockMinimo ? '⚠️ STOCK BAJO' : '✅ Stock OK';
+    
+    infoDiv.innerHTML = `
+        <strong>${producto.nombre}</strong> | 
+        Código: ${producto.codigo} | 
+        Stock actual: ${stockActual} ${producto.unidad} | 
+        Mínimo: ${stockMinimo} ${producto.unidad} | 
+        ${alertaStock} | 
+        Área: ${producto.area} | 
+        Ubicación: ${producto.ubicacion}
+    `;
+    
+    infoRow.style.display = 'table-row';
+}
+
+/**
+ * Limpia el formulario de registro de salidas
+ */
+function clearOutputForm() {
+    document.getElementById('outputProductSelect').value = '';
+    document.getElementById('outputCantidad').value = '1';
+    document.getElementById('outputResponsable').value = '';
+    document.getElementById('outputAreaDestino').value = 'OFICINA';
+    document.getElementById('outputObservaciones').value = '';
+    document.getElementById('outputProductInfoRow').style.display = 'none';
+}
+
+/**
+ * Registra una salida de producto
+ */
+function registerOutput() {
+    const select = document.getElementById('outputProductSelect');
+    const cantidad = parseInt(document.getElementById('outputCantidad').value);
+    const responsable = document.getElementById('outputResponsable').value.trim();
+    const areaDestino = document.getElementById('outputAreaDestino').value;
+    const observaciones = document.getElementById('outputObservaciones').value.trim();
+    
+    // Validaciones
+    if (!select.value) {
+        alert('Por favor selecciona un producto');
+        return;
+    }
+    
+    if (!cantidad || cantidad <= 0) {
+        alert('Por favor ingresa una cantidad válida');
+        return;
+    }
+    
+    if (!responsable) {
+        alert('Por favor ingresa el nombre del responsable');
+        return;
+    }
+    
+    const codigo = parseInt(select.value);
+    const producto = inventario.find(item => item.codigo === codigo);
+    
+    if (!producto) {
+        alert('Producto no encontrado');
+        return;
+    }
+    
+    if (cantidad > producto.cantidad) {
+        alert(`No hay suficiente stock. Stock disponible: ${producto.cantidad} ${producto.unidad}`);
+        return;
+    }
+    
+    // Confirmar la salida
+    const confirmacion = confirm(
+        `¿Confirmar salida?\n\n` +
+        `Producto: ${producto.nombre}\n` +
+        `Cantidad: ${cantidad} ${producto.unidad}\n` +
+        `Responsable: ${responsable}\n` +
+        `Área destino: ${areaDestino}\n` +
+        `Stock restante: ${producto.cantidad - cantidad} ${producto.unidad}`
+    );
+    
+    if (!confirmacion) return;
+    
+    // Crear registro de salida
+    const salida = {
+        id: nextOutputId++,
+        fecha: new Date().toLocaleString('es-MX'),
+        codigo: codigo,
+        nombre: producto.nombre,
+        cantidad: cantidad,
+        unidad: producto.unidad,
+        responsable: responsable,
+        areaDestino: areaDestino,
+        observaciones: observaciones,
+        stockAnterior: producto.cantidad,
+        stockRestante: producto.cantidad - cantidad
+    };
+    
+    // Agregar a la lista de salidas
+    salidas.unshift(salida); // Agregar al inicio para mostrar los más recientes primero
+    
+    // Actualizar stock del producto
+    producto.cantidad -= cantidad;
+    
+    // Actualizar salida con stock final
+    salida.stockRestante = producto.cantidad;
+    
+    // Guardar en localStorage
+    saveToLocalStorage();
+    saveOutputsToLocalStorage();
+    
+    // Actualizar la interfaz
+    renderTable();
+    renderOutputsTable();
+    updateStats();
+    
+    // Limpiar formulario
+    clearOutputForm();
+    
+    // Cerrar formulario
+    toggleOutputForm();
+    
+    // Mostrar mensaje de confirmación
+    alert(`✅ Salida registrada exitosamente\n\nStock restante: ${producto.cantidad} ${producto.unidad}`);
+}
+
+/**
+ * Alterna la visibilidad de la tabla de salidas
+ */
+function toggleOutputsTable() {
+    const container = document.getElementById('outputsTableContainer');
+    const toggleIcon = document.getElementById('outputsToggleIcon');
+    const toggleText = document.getElementById('outputsToggleText');
+    
+    if (!container || !toggleIcon || !toggleText) return;
+    
+    if (container.classList.contains('hidden')) {
+        container.classList.remove('hidden');
+        toggleIcon.className = 'fas fa-eye-slash';
+        toggleText.textContent = 'Ocultar';
+        renderOutputsTable();
+    } else {
+        container.classList.add('hidden');
+        toggleIcon.className = 'fas fa-eye';
+        toggleText.textContent = 'Mostrar';
+    }
+}
+
+/**
+ * Renderiza la tabla de salidas
+ */
+function renderOutputsTable() {
+    const tbody = document.getElementById('outputsTableBody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    if (salidas.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: #6c757d; font-style: italic;">No hay salidas registradas</td></tr>';
+        return;
+    }
+    
+    salidas.forEach(salida => {
+        const row = document.createElement('tr');
+        
+        // Encontrar el producto actual para obtener stock actual
+        const producto = inventario.find(item => item.codigo === salida.codigo);
+        const stockActual = producto ? producto.cantidad : salida.stockRestante;
+        const stockClass = stockActual <= (producto ? producto.cantidadMinima : 0) ? 'low' : 'ok';
+        
+        row.innerHTML = `
+            <td class="output-date">${salida.fecha}</td>
+            <td class="output-product">${salida.nombre}</td>
+            <td class="output-code">${salida.codigo}</td>
+            <td class="output-quantity">-${salida.cantidad}</td>
+            <td class="output-responsable">${salida.responsable}</td>
+            <td class="output-destination ${salida.areaDestino}">${salida.areaDestino}</td>
+            <td class="output-observations" title="${salida.observaciones}">${salida.observaciones || 'Sin observaciones'}</td>
+            <td class="output-stock-remaining ${stockClass}">${stockActual}</td>
+            <td class="output-actions">
+                <button class="btn-edit" onclick="editOutput(${salida.id})" title="Editar salida">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn-delete" onclick="deleteOutput(${salida.id})" title="Eliminar salida">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+}
+
+/**
+ * Ordena la tabla de salidas por la columna especificada
+ */
+function sortOutputsTable(columnIndex) {
+    // Implementación básica de ordenamiento
+    // Por simplicidad, aquí solo se re-renderiza la tabla
+    // En una implementación completa se podría agregar lógica de ordenamiento
+    renderOutputsTable();
+}
+
+/**
+ * Edita una salida registrada
+ */
+function editOutput(outputId) {
+    const salida = salidas.find(s => s.id === outputId);
+    if (!salida) return;
+    
+    // Por simplicidad, aquí se podría implementar un modal de edición
+    alert('Funcionalidad de edición en desarrollo. Por ahora solo se puede eliminar la salida.');
+}
+
+/**
+ * Elimina una salida registrada
+ */
+function deleteOutput(outputId) {
+    const salida = salidas.find(s => s.id === outputId);
+    if (!salida) return;
+    
+    const confirmacion = confirm(
+        `¿Eliminar esta salida?\n\n` +
+        `Producto: ${salida.nombre}\n` +
+        `Cantidad: ${salida.cantidad} ${salida.unidad}\n` +
+        `Fecha: ${salida.fecha}\n\n` +
+        `⚠️ Esto restaurará ${salida.cantidad} ${salida.unidad} al inventario.`
+    );
+    
+    if (!confirmacion) return;
+    
+    // Restaurar stock al producto
+    const producto = inventario.find(item => item.codigo === salida.codigo);
+    if (producto) {
+        producto.cantidad += salida.cantidad;
+    }
+    
+    // Eliminar la salida
+    salidas = salidas.filter(s => s.id !== outputId);
+    
+    // Guardar cambios
+    saveToLocalStorage();
+    saveOutputsToLocalStorage();
+    
+    // Actualizar interfaz
+    renderTable();
+    renderOutputsTable();
+    updateStats();
+    
+    alert('✅ Salida eliminada y stock restaurado exitosamente');
+}
+
+/**
+ * Guarda las salidas en localStorage
+ */
+function saveOutputsToLocalStorage() {
+    try {
+        localStorage.setItem('inventario_salidas', JSON.stringify(salidas));
+        localStorage.setItem('inventario_nextOutputId', nextOutputId.toString());
+    } catch (error) {
+        console.error('Error al guardar salidas:', error);
+    }
+}
+
+/**
+ * Carga las salidas desde localStorage
+ */
+function loadOutputsFromLocalStorage() {
+    try {
+        const savedOutputs = localStorage.getItem('inventario_salidas');
+        const savedNextId = localStorage.getItem('inventario_nextOutputId');
+        
+        if (savedOutputs) {
+            salidas = JSON.parse(savedOutputs);
+        }
+        
+        if (savedNextId) {
+            nextOutputId = parseInt(savedNextId);
+        }
+    } catch (error) {
+        console.error('Error al cargar salidas:', error);
+    }
 }
 
 // Inicializar cuando el DOM esté listo

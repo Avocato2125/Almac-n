@@ -6,12 +6,14 @@ Un sistema completo de gestión de inventario desarrollado con HTML, CSS y JavaS
 
 ### Funcionalidades Principales
 - **Gestión de Productos**: Agregar, editar y eliminar productos del inventario
+- **Registro de Salidas**: Sistema completo para registrar salidas de productos con trazabilidad
 - **Gestión de Proveedores**: Sistema completo de gestión de proveedores con información detallada
 - **Búsqueda y Filtrado Avanzado**: Barra de búsqueda moderna con filtrado por área
 - **Control de Stock Inteligente**: Alertas automáticas con cantidad mínima personalizable por producto
 - **Cálculo de Días en Stock**: Seguimiento del tiempo que los productos han estado en inventario
-- **Exportación de Datos**: Descarga de inventario completo en formato CSV
+- **Exportación de Datos**: Descarga de inventario completo y historial de salidas en formato CSV
 - **Resumen por Áreas**: Estadísticas detalladas por área de almacén
+- **Historial de Salidas**: Registro completo de todas las salidas con información detallada
 
 ### Áreas de Almacén
 - **OFICINA**: Material de oficina y papelería
@@ -78,6 +80,39 @@ Almacen/
 - Se descargará un archivo CSV con todos los datos del inventario
 - El archivo está optimizado para abrirse correctamente en Excel
 
+## 📤 Registrar Salidas
+
+### Cómo Registrar una Salida
+1. **Abrir formulario**: Haz clic en "Registrar Salida" en la barra de herramientas
+2. **Seleccionar producto**: Elige el producto que sale del almacén (solo aparecen productos con stock disponible)
+3. **Ingresar cantidad**: Especifica cuántas unidades salen
+4. **Responsable**: Ingresa el nombre de la persona responsable de la salida
+5. **Área destino**: Selecciona hacia dónde se dirige el producto
+6. **Observaciones**: Opcionalmente, agrega el motivo de la salida
+7. **Confirmar**: Revisa los datos y confirma la salida
+
+### Información de la Salida
+- **Fecha y hora**: Se registra automáticamente
+- **Stock actualizado**: Se reduce automáticamente el inventario
+- **Trazabilidad**: Queda registrado quién, cuándo y hacia dónde salió
+- **Validaciones**: No permite salidas superiores al stock disponible
+
+### Historial de Salidas
+- **Ver historial**: Haz clic en "Mostrar" en la sección "Historial de Salidas"
+- **Información detallada**: Fecha, producto, cantidad, responsable, destino y observaciones
+- **Stock restante**: Muestra cuánto queda disponible después de cada salida
+- **Acciones**: Editar o eliminar salidas registradas
+- **Exportar**: Descargar el historial completo en formato CSV
+
+### Áreas de Destino Disponibles
+- **OFICINA**: Material para uso en oficinas
+- **LIMPIEZA**: Productos para limpieza general
+- **TALLER**: Herramientas y repuestos para taller
+- **ENFERMERIA**: Material médico y sanitario
+- **VENTA**: Productos destinados a venta
+- **DESECHO**: Material para desechar
+- **OTRO**: Otros destinos no especificados
+
 ## ⌨️ Atajos de Teclado
 
 | Atajo | Acción |
@@ -95,6 +130,8 @@ El sistema utiliza **localStorage** del navegador para:
 - Preservar el contador de códigos de productos
 - Mantener la base de datos de proveedores
 - Sincronizar información entre productos y proveedores
+- Conservar el historial completo de salidas
+- Mantener la trazabilidad de movimientos de inventario
 
 ## 🎨 Características de Diseño
 

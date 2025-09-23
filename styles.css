@@ -715,3 +715,245 @@ th:hover i {
         padding: 6px;
     }
 }
+
+/* Estilos para la sección de salidas */
+.output-form {
+    background: #fff8e1;
+    border: 1px solid #ffcc02;
+    border-radius: 8px;
+    margin: 10px;
+    padding: 15px;
+    box-shadow: 0 2px 8px rgba(255, 204, 2, 0.2);
+}
+
+.output-form .form-title {
+    background: linear-gradient(135deg, #FF9800, #F57C00);
+    color: white;
+    padding: 10px 15px;
+    margin: -15px -15px 15px -15px;
+    border-radius: 8px 8px 0 0;
+    font-weight: bold;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.output-form .form-title i {
+    font-size: 16px;
+}
+
+/* Estilos para la sección de historial de salidas */
+.outputs-section {
+    margin: 20px 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: linear-gradient(135deg, #6c757d, #495057);
+    color: white;
+    border-radius: 8px 8px 0 0;
+}
+
+.section-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.section-header h3 i {
+    color: #ffc107;
+    font-size: 18px;
+}
+
+.outputs-table-container {
+    padding: 0;
+    border-radius: 0 0 8px 8px;
+    overflow: hidden;
+}
+
+#outputsTable {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    font-size: 12px;
+}
+
+#outputsTable th {
+    background: #e9ecef;
+    color: #495057;
+    padding: 8px 6px;
+    text-align: left;
+    border: 1px solid #dee2e6;
+    font-weight: bold;
+    font-size: 11px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#outputsTable th:hover {
+    background: #dee2e6;
+}
+
+#outputsTable th i {
+    margin-left: 5px;
+    color: #6c757d;
+    font-size: 10px;
+}
+
+#outputsTable td {
+    padding: 6px;
+    border: 1px solid #dee2e6;
+    font-size: 11px;
+}
+
+#outputsTable tbody tr:nth-child(even) {
+    background: #f8f9fa;
+}
+
+#outputsTable tbody tr:hover {
+    background: #e3f2fd;
+}
+
+/* Estilos específicos para columnas de la tabla de salidas */
+.output-date {
+    font-family: 'Courier New', monospace;
+    color: #495057;
+    white-space: nowrap;
+}
+
+.output-product {
+    font-weight: 500;
+    color: #212529;
+}
+
+.output-code {
+    font-family: 'Courier New', monospace;
+    background: #f8f9fa;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 10px;
+}
+
+.output-quantity {
+    text-align: center;
+    font-weight: bold;
+    color: #dc3545;
+}
+
+.output-responsable {
+    color: #495057;
+}
+
+.output-destination {
+    text-align: center;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+.output-destination.OFICINA { background: #e3f2fd; color: #1976d2; }
+.output-destination.LIMPIEZA { background: #e8f5e8; color: #388e3c; }
+.output-destination.TALLER { background: #fff3e0; color: #f57c00; }
+.output-destination.ENFERMERIA { background: #fce4ec; color: #c2185b; }
+.output-destination.VENTA { background: #f3e5f5; color: #7b1fa2; }
+.output-destination.DESECHO { background: #ffebee; color: #d32f2f; }
+.output-destination.OTRO { background: #f5f5f5; color: #616161; }
+
+.output-observations {
+    color: #6c757d;
+    font-style: italic;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.output-stock-remaining {
+    text-align: center;
+    font-weight: bold;
+}
+
+.output-stock-remaining.low {
+    color: #dc3545;
+}
+
+.output-stock-remaining.ok {
+    color: #28a745;
+}
+
+/* Botones de acción para salidas */
+.output-actions {
+    display: flex;
+    gap: 3px;
+    justify-content: center;
+}
+
+.output-actions button {
+    padding: 2px 6px;
+    font-size: 10px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.output-actions .btn-edit {
+    background: #17a2b8;
+    color: white;
+}
+
+.output-actions .btn-edit:hover {
+    background: #138496;
+}
+
+.output-actions .btn-delete {
+    background: #dc3545;
+    color: white;
+}
+
+.output-actions .btn-delete:hover {
+    background: #c82333;
+}
+
+/* Responsive para tabla de salidas */
+@media (max-width: 1200px) {
+    #outputsTable {
+        font-size: 10px;
+    }
+    
+    #outputsTable th,
+    #outputsTable td {
+        padding: 4px 3px;
+    }
+    
+    .output-observations {
+        max-width: 150px;
+    }
+}
+
+@media (max-width: 768px) {
+    .section-header {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    #outputsTable {
+        font-size: 9px;
+    }
+    
+    .output-observations {
+        max-width: 100px;
+    }
+}

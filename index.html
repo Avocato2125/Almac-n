@@ -33,6 +33,7 @@
                 </select>
             </div>
             <button class="btn" onclick="toggleAddForm()" title="Agregar nuevo producto (Ctrl+N)"><i class="fas fa-plus"></i> Agregar Producto</button>
+            <button class="btn" onclick="toggleOutputForm()" title="Registrar salida de productos"><i class="fas fa-arrow-right"></i> Registrar Salida</button>
             <button class="btn" onclick="toggleProviderForm()" title="Gestionar proveedores"><i class="fas fa-truck"></i> Proveedores</button>
             <button class="btn" onclick="exportData()" title="Exportar a CSV (Ctrl+S)"><i class="fas fa-download"></i> Descargar CSV</button>
             <button class="btn" onclick="showSummary()" title="Ver resumen por área"><i class="fas fa-chart-bar"></i> Resumen</button>
@@ -122,6 +123,71 @@
             </table>
         </div>
 
+        <!-- Sección de registro de salidas -->
+        <div class="output-form hidden" id="outputForm">
+            <div class="form-title"><i class="fas fa-arrow-right"></i> Registrar Salida de Producto</div>
+            <table style="width: 100%; margin-bottom: 10px;">
+                <tr>
+                    <td style="border: none; padding: 5px; vertical-align: top;">
+                        <div class="field-label">
+                            <i class="fas fa-search"></i> Buscar Producto:
+                        </div>
+                        <select id="outputProductSelect" onchange="updateOutputProductInfo()">
+                            <option value="">Seleccionar producto...</option>
+                        </select>
+                    </td>
+                    <td style="border: none; padding: 5px; vertical-align: top;">
+                        <div class="field-label">
+                            <i class="fas fa-boxes"></i> Cantidad a Salir:
+                        </div>
+                        <input type="number" id="outputCantidad" placeholder="Cantidad" min="1" value="1">
+                    </td>
+                    <td style="border: none; padding: 5px; vertical-align: top;">
+                        <div class="field-label">
+                            <i class="fas fa-user"></i> Responsable:
+                        </div>
+                        <input type="text" id="outputResponsable" placeholder="Nombre del responsable" required>
+                    </td>
+                    <td style="border: none; padding: 5px; vertical-align: top;">
+                        <div class="field-label">
+                            <i class="fas fa-building"></i> Área Destino:
+                        </div>
+                        <select id="outputAreaDestino">
+                            <option value="OFICINA">OFICINA</option>
+                            <option value="LIMPIEZA">LIMPIEZA</option>
+                            <option value="TALLER">TALLER</option>
+                            <option value="ENFERMERIA">ENFERMERIA</option>
+                            <option value="VENTA">VENTA</option>
+                            <option value="DESECHO">DESECHO</option>
+                            <option value="OTRO">OTRO</option>
+                        </select>
+                    </td>
+                    <td style="border: none; padding: 5px; vertical-align: top;">
+                        <div class="field-label">
+                            <i class="fas fa-sticky-note"></i> Observaciones:
+                        </div>
+                        <input type="text" id="outputObservaciones" placeholder="Motivo de la salida">
+                    </td>
+                    <td style="border: none; padding: 5px; vertical-align: top;">
+                        <div class="field-label">
+                            <i class="fas fa-cogs"></i> Acciones:
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 3px;">
+                            <button class="btn" onclick="registerOutput()" style="background: #FF9800; color: white; padding: 5px 10px; font-size: 11px;"><i class="fas fa-check"></i> Registrar Salida</button>
+                            <button class="btn" onclick="toggleOutputForm()" style="padding: 5px 10px; font-size: 11px;"><i class="fas fa-times"></i> Cancelar</button>
+                        </div>
+                    </td>
+                </tr>
+                <tr id="outputProductInfoRow" style="display: none;">
+                    <td colspan="6" style="border: none; padding: 10px; background: #fff3cd; border-radius: 5px;">
+                        <div id="outputProductInfo" style="font-size: 12px; color: #856404;">
+                            <!-- Información del producto seleccionado se mostrará aquí -->
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
         <!-- Sección de gestión de proveedores -->
         <div class="provider-section hidden" id="providerSection">
             <div class="form-title"><i class="fas fa-truck"></i> Gestión de Proveedores</div>
@@ -196,6 +262,41 @@
                 <!-- Los datos se cargarán dinámicamente aquí -->
             </tbody>
         </table>
+
+        <!-- Tabla de historial de salidas -->
+        <div class="outputs-section">
+            <div class="section-header">
+                <h3><i class="fas fa-history"></i> Historial de Salidas</h3>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button class="btn" onclick="exportOutputsData()" title="Exportar historial de salidas a CSV" style="background: #17a2b8; color: white;">
+                        <i class="fas fa-download"></i> Exportar Salidas
+                    </button>
+                    <button class="btn" onclick="toggleOutputsTable()" title="Mostrar/Ocultar historial de salidas">
+                        <i class="fas fa-eye" id="outputsToggleIcon"></i> <span id="outputsToggleText">Mostrar</span>
+                    </button>
+                </div>
+            </div>
+            <div class="outputs-table-container hidden" id="outputsTableContainer">
+                <table id="outputsTable">
+                    <thead>
+                        <tr>
+                            <th onclick="sortOutputsTable(0)" title="Hacer clic para ordenar">FECHA <i class="fas fa-sort"></i></th>
+                            <th onclick="sortOutputsTable(1)" title="Hacer clic para ordenar">PRODUCTO <i class="fas fa-sort"></i></th>
+                            <th onclick="sortOutputsTable(2)" title="Hacer clic para ordenar">CÓDIGO <i class="fas fa-sort"></i></th>
+                            <th onclick="sortOutputsTable(3)" title="Hacer clic para ordenar">CANTIDAD <i class="fas fa-sort"></i></th>
+                            <th onclick="sortOutputsTable(4)" title="Hacer clic para ordenar">RESPONSABLE <i class="fas fa-sort"></i></th>
+                            <th onclick="sortOutputsTable(5)" title="Hacer clic para ordenar">ÁREA DESTINO <i class="fas fa-sort"></i></th>
+                            <th onclick="sortOutputsTable(6)" title="Hacer clic para ordenar">OBSERVACIONES <i class="fas fa-sort"></i></th>
+                            <th>STOCK RESTANTE</th>
+                            <th>ACCIONES</th>
+                        </tr>
+                    </thead>
+                    <tbody id="outputsTableBody">
+                        <!-- Los datos de salidas se cargarán dinámicamente aquí -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <!-- Información de atajos de teclado -->
