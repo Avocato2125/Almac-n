@@ -993,92 +993,6 @@ function clearSearch() {
     }
 }
 
-/**
- * Inicializa la aplicación
- */
-function initializeApp() {
-    // Cargar datos guardados
-    loadFromLocalStorage();
-    loadProvidersFromLocalStorage();
-    loadOutputsFromLocalStorage();
-    
-    // Renderizar tabla inicial
-    renderTable();
-    
-    // Actualizar selector de proveedores
-    updateProviderSelect();
-    
-    // Configurar event listeners
-    const searchBox = document.getElementById('searchBox');
-    const areaFilter = document.getElementById('areaFilter');
-    
-    if (searchBox) {
-        searchBox.addEventListener('input', () => {
-            renderTable(getCurrentFilteredData());
-        });
-    }
-    
-    if (areaFilter) {
-        areaFilter.addEventListener('change', () => {
-            renderTable(getCurrentFilteredData());
-        });
-    }
-    
-    // Configurar atajos de teclado
-    document.addEventListener('keydown', (e) => {
-        // Ctrl + N para agregar producto
-        if (e.ctrlKey && e.key === 'n') {
-            e.preventDefault();
-            toggleAddForm();
-        }
-        
-        // Ctrl + S para exportar
-        if (e.ctrlKey && e.key === 's') {
-            e.preventDefault();
-            exportData();
-        }
-        
-        // Escape para cerrar formularios o limpiar búsqueda
-        if (e.key === 'Escape') {
-            const searchBox = document.getElementById('searchBox');
-            const addForm = document.getElementById('addForm');
-            const summaryBox = document.getElementById('summaryBox');
-            const providerSection = document.getElementById('providerSection');
-            
-            // Si hay texto en la búsqueda, limpiarlo
-            if (searchBox && searchBox.value.trim()) {
-                clearSearch();
-                return;
-            }
-            
-            // Cerrar formularios abiertos
-            if (addForm && !addForm.classList.contains('hidden')) {
-                toggleAddForm();
-            }
-            
-            if (summaryBox && !summaryBox.classList.contains('hidden')) {
-                summaryBox.classList.add('hidden');
-            }
-            
-            if (providerSection && !providerSection.classList.contains('hidden')) {
-                providerSection.classList.add('hidden');
-            }
-        }
-        
-        // Ctrl + F para enfocar búsqueda
-        if (e.ctrlKey && e.key === 'f') {
-            e.preventDefault();
-            const searchBox = document.getElementById('searchBox');
-            if (searchBox) {
-                searchBox.focus();
-                searchBox.select();
-            }
-        }
-    });
-    
-    console.log('Sistema de Inventario inicializado correctamente');
-}
-
 // ===== FUNCIONES PARA EL MANEJO DE SALIDAS =====
 
 /**
@@ -1429,6 +1343,93 @@ function loadOutputsFromLocalStorage() {
         console.error('Error al cargar salidas:', error);
     }
 }
+
+/**
+ * Inicializa la aplicación
+ */
+function initializeApp() {
+    // Cargar datos guardados
+    loadFromLocalStorage();
+    loadProvidersFromLocalStorage();
+    loadOutputsFromLocalStorage();
+    
+    // Renderizar tabla inicial
+    renderTable();
+    
+    // Actualizar selector de proveedores
+    updateProviderSelect();
+    
+    // Configurar event listeners
+    const searchBox = document.getElementById('searchBox');
+    const areaFilter = document.getElementById('areaFilter');
+    
+    if (searchBox) {
+        searchBox.addEventListener('input', () => {
+            renderTable(getCurrentFilteredData());
+        });
+    }
+    
+    if (areaFilter) {
+        areaFilter.addEventListener('change', () => {
+            renderTable(getCurrentFilteredData());
+        });
+    }
+    
+    // Configurar atajos de teclado
+    document.addEventListener('keydown', (e) => {
+        // Ctrl + N para agregar producto
+        if (e.ctrlKey && e.key === 'n') {
+            e.preventDefault();
+            toggleAddForm();
+        }
+        
+        // Ctrl + S para exportar
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            exportData();
+        }
+        
+        // Escape para cerrar formularios o limpiar búsqueda
+        if (e.key === 'Escape') {
+            const searchBox = document.getElementById('searchBox');
+            const addForm = document.getElementById('addForm');
+            const summaryBox = document.getElementById('summaryBox');
+            const providerSection = document.getElementById('providerSection');
+            
+            // Si hay texto en la búsqueda, limpiarlo
+            if (searchBox && searchBox.value.trim()) {
+                clearSearch();
+                return;
+            }
+            
+            // Cerrar formularios abiertos
+            if (addForm && !addForm.classList.contains('hidden')) {
+                toggleAddForm();
+            }
+            
+            if (summaryBox && !summaryBox.classList.contains('hidden')) {
+                summaryBox.classList.add('hidden');
+            }
+            
+            if (providerSection && !providerSection.classList.contains('hidden')) {
+                providerSection.classList.add('hidden');
+            }
+        }
+        
+        // Ctrl + F para enfocar búsqueda
+        if (e.ctrlKey && e.key === 'f') {
+            e.preventDefault();
+            const searchBox = document.getElementById('searchBox');
+            if (searchBox) {
+                searchBox.focus();
+                searchBox.select();
+            }
+        }
+    });
+    
+    console.log('Sistema de Inventario inicializado correctamente');
+}
+
 
 // Inicializar cuando el DOM esté listo
 if (document.readyState === 'loading') {
