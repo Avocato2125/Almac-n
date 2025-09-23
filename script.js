@@ -1431,6 +1431,21 @@ function initializeApp() {
 }
 
 
+// Verificar que las funciones estén disponibles globalmente
+window.toggleOutputsTable = toggleOutputsTable;
+window.exportOutputsData = exportOutputsData;
+window.toggleOutputForm = toggleOutputForm;
+window.updateOutputProductSelect = updateOutputProductSelect;
+window.updateOutputProductInfo = updateOutputProductInfo;
+window.clearOutputForm = clearOutputForm;
+window.registerOutput = registerOutput;
+window.renderOutputsTable = renderOutputsTable;
+window.sortOutputsTable = sortOutputsTable;
+window.editOutput = editOutput;
+window.deleteOutput = deleteOutput;
+window.saveOutputsToLocalStorage = saveOutputsToLocalStorage;
+window.loadOutputsFromLocalStorage = loadOutputsFromLocalStorage;
+
 // Inicializar cuando el DOM esté listo
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeApp);
