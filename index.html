@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Control de Inventario</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="description" content="Sistema de control de inventario con funcionalidades avanzadas de gestión">
+    <meta name="keywords" content="inventario, almacén, control, gestión, productos">
+    <meta name="author" content="Sistema de Inventario">
+</head>
+<body>
+    <div class="excel-container">
+        <!-- Barra de herramientas -->
+        <div class="toolbar">
+            <div class="search-container">
+                <input type="text" id="searchBox" class="search-box" placeholder="Buscar por nombre o código...">
+                <button type="button" class="search-clear-btn" onclick="clearSearch()" title="Limpiar búsqueda">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 12px; font-weight: bold; color: #666; white-space: nowrap;">
+                    <i class="fas fa-filter"></i> Filtrar:
+                </span>
+                <select id="areaFilter" class="filter-select">
+                    <option value="">Todas las áreas</option>
+                    <option value="OFICINA">OFICINA</option>
+                    <option value="LIMPIEZA">LIMPIEZA</option>
+                    <option value="TALLER">TALLER</option>
+                    <option value="ENFERMERIA">ENFERMERIA</option>
+                </select>
+            </div>
+            <button class="btn" onclick="toggleAddForm()" title="Agregar nuevo producto (Ctrl+N)"><i class="fas fa-plus"></i> Agregar Producto</button>
+            <button class="btn" onclick="toggleProviderForm()" title="Gestionar proveedores"><i class="fas fa-truck"></i> Proveedores</button>
+            <button class="btn" onclick="exportData()" title="Exportar a CSV (Ctrl+S)"><i class="fas fa-download"></i> Descargar CSV</button>
+            <button class="btn" onclick="showSummary()" title="Ver resumen por área"><i class="fas fa-chart-bar"></i> Resumen</button>
+            
+            <div class="stats">
+                <div class="stat-item stat-total"><i class="fas fa-boxes"></i> Total: <span id="totalItems">0</span></div>
+                <div class="stat-item stat-low"><i class="fas fa-exclamation-triangle"></i> Stock Bajo: <span id="lowStock">0</span></div>
+                <div class="stat-item stat-ok"><i class="fas fa-check-circle"></i> OK: <span id="okStock">0</span></div>
+            </div>
+        </div>
+
+        <!-- Formulario para agregar productos -->
+        <div class="add-form hidden" id="addForm">
+            <div class="form-title"><i class="fas fa-plus-circle"></i> Agregar Nuevo Producto</div>
+            <table style="width: 100%; margin-bottom: 10px;">
+                <tr>
+                    <td style="border: none; padding: 5px; vertical-align: top;">
+                        <div class="field-label">
+                            <i class="fas fa-tag"></i> Nombre:
+                        </div>
+                        <input type="text" id="newNombre" placeholder="Nombre del producto" required>
+                    </td>
+                    <td style="border: none; padding: 5px; vertical-align: top;">
+                        <div class="field-label">
+                            <i class="fas fa-building"></i> Área:
+                        </div>
+                        <select id="newArea">
+                            <option value="OFICINA">OFICINA</option>
+                            <option value="LIMPIEZA">LIMPIEZA</option>
+                            <option value="TALLER">TALLER</option>
+                            <option value="ENFERMERIA">ENFERMERIA</option>
+                        </select>
+                    </td>
+                    <td style="border: none; padding: 5px; vertical-align: top;">
+                        <div class="field-label">
+                            <i class="fas fa-boxes"></i> Cantidad:
+                        </div>
+                        <input type="number" id="newCantidad" placeholder="Cantidad" min="0" value="0">
+                    </td>
+                    <td style="border: none; padding: 5px; vertical-align: top;">
+                        <div class="field-label">
+                            <i class="fas fa-ruler"></i> Unidad:
+                        </div>
+                        <input type="text" id="newUnidad" placeholder="PZ, CAJAS, etc." value="PZ">
+                    </td>
+                    <td style="border: none; padding: 5px; vertical-align: top;">
+                        <div class="field-label">
+                            <i class="fas fa-exclamation-triangle"></i> Mínima:
+                        </div>
+                        <input type="number" id="newCantidadMinima" placeholder="Cantidad mínima" min="0" value="2" title="Cantidad mínima para alerta de stock bajo">
+                    </td>
+                    <td style="border: none; padding: 5px; vertical-align: top;">
+                        <div class="field-label">
+                            <i class="fas fa-dollar-sign"></i> Precio:
+                        </div>
+                        <div class="currency-input">
+                            <span class="currency-symbol">$</span>
+                            <input type="text" id="newPrecio" placeholder="0.00" oninput="formatCurrency(this)" onblur="validateCurrency(this)">
+                        </div>
+                    </td>
+                    <td style="border: none; padding: 5px; vertical-align: top;">
+                        <div class="field-label">
+                            <i class="fas fa-truck"></i> Proveedor:
+                        </div>
+                        <select id="newProveedor" onchange="updateProviderInfo()">
+                            <option value="">Seleccionar proveedor...</option>
+                        </select>
+                        <button type="button" class="btn" onclick="toggleProviderForm()" style="margin-top: 5px; padding: 3px 8px; font-size: 11px;"><i class="fas fa-plus"></i> Nuevo</button>
+                    </td>
+                    <td style="border: none; padding: 5px; vertical-align: top;">
+                        <div class="field-label">
+                            <i class="fas fa-cogs"></i> Acciones:
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 3px;">
+                            <button class="btn" onclick="addProduct()" style="background: #4CAF50; color: white; padding: 5px 10px; font-size: 11px;"><i class="fas fa-check"></i> Agregar</button>
+                            <button class="btn" onclick="toggleAddForm()" style="padding: 5px 10px; font-size: 11px;"><i class="fas fa-times"></i> Cancelar</button>
+                        </div>
+                    </td>
+                </tr>
+                <tr id="providerInfoRow" style="display: none;">
+                    <td colspan="8" style="border: none; padding: 10px; background: #f0f8ff; border-radius: 5px;">
+                        <div id="providerInfo" style="font-size: 12px; color: #666;">
+                            <!-- Información del proveedor se mostrará aquí -->
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Sección de gestión de proveedores -->
+        <div class="provider-section hidden" id="providerSection">
+            <div class="form-title"><i class="fas fa-truck"></i> Gestión de Proveedores</div>
+            
+            <!-- Formulario para agregar proveedor -->
+            <div class="provider-form">
+                <h3><i class="fas fa-plus-circle"></i> Agregar Nuevo Proveedor</h3>
+                <div class="provider-form-grid">
+                    <input type="text" id="providerNombre" placeholder="Nombre del proveedor" required>
+                    <input type="text" id="providerRFC" placeholder="RFC">
+                    <input type="text" id="providerTelefono" placeholder="Teléfono">
+                    <input type="email" id="providerEmail" placeholder="Email">
+                    <input type="text" id="providerDireccion" placeholder="Dirección">
+                    <input type="text" id="providerContacto" placeholder="Persona de contacto">
+                    <div class="provider-buttons">
+                        <button class="btn" onclick="addProvider()" style="background: #4CAF50; color: white;"><i class="fas fa-check"></i> Agregar</button>
+                        <button class="btn" onclick="clearProviderForm()"><i class="fas fa-eraser"></i> Limpiar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de proveedores -->
+            <div class="providers-list">
+                <h3><i class="fas fa-list"></i> Proveedores Registrados</h3>
+                <div class="providers-table-container">
+                    <table id="providersTable">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>RFC</th>
+                                <th>Teléfono</th>
+                                <th>Email</th>
+                                <th>Contacto</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="providersTableBody">
+                            <!-- Los proveedores se cargarán aquí -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel de resumen -->
+        <div class="summary-box hidden" id="summaryBox">
+            <div class="form-title"><i class="fas fa-chart-pie"></i> Resumen por Área</div>
+            <div id="summaryContent"></div>
+        </div>
+
+        <!-- Tabla principal del inventario -->
+        <table id="inventoryTable">
+            <thead>
+                <tr>
+                    <th onclick="sortTable(0)" title="Hacer clic para ordenar">CÓDIGO <i class="fas fa-sort"></i></th>
+                    <th onclick="sortTable(1)" title="Hacer clic para ordenar">NOMBRE <i class="fas fa-sort"></i></th>
+                    <th onclick="sortTable(2)" title="Hacer clic para ordenar">ÁREA <i class="fas fa-sort"></i></th>
+                    <th onclick="sortTable(3)" title="Hacer clic para ordenar">CANTIDAD <i class="fas fa-sort"></i></th>
+                    <th onclick="sortTable(4)" title="Hacer clic para ordenar">MÍNIMA <i class="fas fa-sort"></i></th>
+                    <th>UNIDAD</th>
+                    <th>PRECIO COMPRA</th>
+                    <th>UBICACIÓN</th>
+                    <th>PROVEEDOR</th>
+                    <th>CONTACTO</th>
+                    <th>FECHA ENTRADA</th>
+                    <th>ALERTA</th>
+                    <th>DÍAS EN STOCK</th>
+                    <th>ACCIONES</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Los datos se cargarán dinámicamente aquí -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Información de atajos de teclado -->
+    <div style="position: fixed; bottom: 10px; left: 10px; background: rgba(0,0,0,0.7); color: white; padding: 5px 10px; border-radius: 3px; font-size: 11px; z-index: 1000;">
+        <strong>Atajos:</strong> Ctrl+F (Buscar) | Ctrl+N (Agregar) | Ctrl+S (Exportar) | Esc (Limpiar/Cerrar)
+    </div>
+
+    <!-- Scripts -->
+    <script src="script.js"></script>
+    
+    <!-- Estilos adicionales para animaciones -->
+    <style>
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    </style>
+</body>
+</html>
