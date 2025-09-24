@@ -11,8 +11,20 @@ const db = require('./database_config');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(helmet());
+// Middleware - Helmet configurado para permitir event handlers inline
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-hashes'", "'unsafe-eval'"],
+            scriptSrcAttr: ["'unsafe-inline'", "'unsafe-hashes'"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
+            fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
+            connectSrc: ["'self'"],
+            imgSrc: ["'self'", "data:"]
+        }
+    }
+}));
 app.use(cors());
 app.use(morgan('combined'));
 app.use(express.json());
