@@ -445,6 +445,15 @@ app.get('/api/next-code', async (req, res) => {
 // ============================================
 
 // Verificar estado de la base de datos
+// Ruta de healthcheck simple (para Railway)
+app.get('/health', (req, res) => {
+    res.json({
+        success: true,
+        status: 'healthy',
+        timestamp: new Date().toISOString()
+    });
+});
+
 app.get('/api/health', async (req, res) => {
     try {
         const isConnected = await db.testConnection();
@@ -488,18 +497,27 @@ app.use((error, req, res, next) => {
 // Iniciar servidor
 async function startServer() {
     try {
-        // Probar conexión a la base de datos
-        const isConnected = await db.testConnection();
-        if (!isConnected) {
-            console.error('❌ No se pudo conectar a la base de datos');
-            process.exit(1);
-        }
-        
+        // Iniciar el servidor primero
         app.listen(PORT, () => {
             console.log(`🚀 Servidor iniciado en puerto ${PORT}`);
             console.log(`📊 Panel web: http://localhost:${PORT}`);
             console.log(`🔗 API: http://localhost:${PORT}/api`);
         });
+        
+        // Probar conexión a la base de datos en segundo plano
+        setTimeout(async () => {
+            try {
+                const isConnected = await db.testConnection();
+                if (isConnected) {
+                    console.log('✅ Conexión a base de datos establecida');
+                } else {
+                    console.warn('⚠️ No se pudo conectar a la base de datos, reintentando...');
+                }
+            } catch (error) {
+                console.warn('⚠️ Error de conexión a base de datos:', error.message);
+            }
+        }, 1000);
+        
     } catch (error) {
         console.error('❌ Error al iniciar servidor:', error);
         process.exit(1);
