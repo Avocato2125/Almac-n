@@ -1,228 +1,134 @@
 # Sistema de Control de Inventario
 
-Un sistema completo de gestión de inventario desarrollado con HTML, CSS y JavaScript puro, diseñado para facilitar el control y administración de productos en almacén.
+Sistema completo de gestión de inventario con funcionalidades avanzadas de control de stock, proveedores y salidas de productos, con base de datos PostgreSQL y API REST.
 
-## 🚀 Características
+## 🚀 Características Principales
 
-### Funcionalidades Principales
-- **Gestión de Productos**: Agregar, editar y eliminar productos del inventario
-- **Registro de Salidas**: Sistema completo para registrar salidas de productos con trazabilidad
-- **Gestión de Proveedores**: Sistema completo de gestión de proveedores con información detallada
-- **Búsqueda y Filtrado Avanzado**: Barra de búsqueda moderna con filtrado por área
-- **Control de Stock Inteligente**: Alertas automáticas con cantidad mínima personalizable por producto
-- **Cálculo de Días en Stock**: Seguimiento del tiempo que los productos han estado en inventario
-- **Exportación de Datos**: Descarga de inventario completo y historial de salidas en formato CSV
-- **Resumen por Áreas**: Estadísticas detalladas por área de almacén
-- **Historial de Salidas**: Registro completo de todas las salidas con información detallada
+- **Gestión de Productos**: CRUD completo con base de datos PostgreSQL
+- **Control de Stock**: Monitoreo de cantidades y alertas de stock bajo
+- **Gestión de Proveedores**: Base de datos completa de proveedores
+- **Registro de Salidas**: Control detallado con transacciones atómicas
+- **Búsqueda Avanzada**: Filtros por área y búsqueda en tiempo real
+- **Exportación de Datos**: Exportar inventario y salidas a CSV
+- **Interfaz Responsiva**: Diseño moderno y profesional
+- **Base de Datos**: PostgreSQL con Railway
+- **API REST**: Backend con Express.js y transacciones
 
-### Áreas de Almacén
-- **OFICINA**: Material de oficina y papelería
-- **LIMPIEZA**: Productos de limpieza y mantenimiento
-- **TALLER**: Herramientas y repuestos
-- **ENFERMERIA**: Material médico y sanitario
+## 🏗️ Arquitectura
 
-## 📁 Estructura del Proyecto
+### Frontend
+- **HTML5**: Estructura semántica
+- **CSS3**: Estilos modernos y responsivos
+- **JavaScript ES6+**: Lógica del cliente con actualizaciones optimistas
+- **Font Awesome**: Iconografía profesional
 
+### Backend
+- **Node.js**: Runtime de JavaScript
+- **Express.js**: Framework web
+- **PostgreSQL**: Base de datos relacional
+- **Railway**: Plataforma de despliegue
+
+### Base de Datos
+- **Tabla `productos`**: Inventario completo
+- **Tabla `proveedores`**: Información de proveedores
+- **Tabla `salidas`**: Historial de salidas
+- **Transacciones**: Operaciones atómicas para integridad
+
+## 🚀 Instalación y Uso
+
+### Desarrollo Local
+
+#### Requisitos
+- Node.js 16+
+- PostgreSQL (Railway)
+- Navegador web moderno
+
+#### Instalación
+```bash
+# Clonar el repositorio
+git clone <tu-repositorio>
+cd sistema-inventario
+
+# Instalar dependencias
+npm install
+
+# Iniciar servidor
+npm start
 ```
-Almacen/
-├── index.html          # Archivo principal HTML
-├── styles.css          # Estilos CSS separados
-├── script.js           # Lógica JavaScript
-├── codigo.html         # Archivo original (backup)
-└── README.md           # Documentación
-```
 
-## 🛠️ Instalación y Uso
+#### Uso Local
+1. Ejecuta `npm start` para iniciar el servidor
+2. Abre `index.html` en tu navegador
+3. El sistema se conectará automáticamente a la base de datos
 
-### Requisitos
-- Navegador web moderno (Chrome, Firefox, Safari, Edge)
-- No requiere servidor web (funciona localmente)
+### Producción (Railway)
 
-### Instalación
-1. Descarga todos los archivos en una carpeta
-2. Abre `index.html` en tu navegador web
-3. ¡Listo! El sistema está listo para usar
+#### Despliegue
+1. Conecta tu repositorio a Railway
+2. Railway detectará automáticamente el proyecto Node.js
+3. La base de datos PostgreSQL ya está configurada
+4. El sistema se desplegará automáticamente
 
-### Uso Básico
-
-#### Agregar Productos
-1. Haz clic en "**+ Agregar Producto**" o presiona `Ctrl+N`
-2. Completa los campos requeridos (cada campo tiene su etiqueta identificativa):
-   - **Nombre**: Nombre del producto
-   - **Área**: Selecciona el área correspondiente
-   - **Cantidad**: Número de unidades actuales
-   - **Cantidad Mínima**: Límite para alerta de stock bajo (por defecto: 2)
-   - **Unidad**: Tipo de unidad (PZ, CAJAS, etc.)
-   - **Precio**: Precio de compra (formato automático de moneda)
-   - **Proveedor**: Selecciona de la lista de proveedores registrados
-3. Haz clic en "**✅ Agregar**"
-
-#### Gestionar Proveedores
-1. Haz clic en "**🚛 Proveedores**" en la barra de herramientas
-2. **Agregar Proveedor**:
-   - Completa los campos: Nombre, RFC, Teléfono, Email, Dirección, Contacto
-   - Haz clic en "**✅ Agregar**"
-3. **Editar Proveedor**: Haz clic en el botón azul de editar en la tabla
-4. **Eliminar Proveedor**: Haz clic en el botón rojo de eliminar (solo si no está en uso)
-
-#### Editar Productos
-- Haz clic en el botón azul de editar (✏️) en la fila del producto
-- Se abrirá el formulario con los datos actuales
-- Modifica los campos necesarios y haz clic en "✅ Actualizar"
-- Los cambios se guardan automáticamente
-
-#### Buscar y Filtrar
-- **Búsqueda**: Escribe en el campo de búsqueda para encontrar productos por nombre o código
-- **Filtro por Área**: Usa el menú desplegable para mostrar solo productos de un área específica
-
-#### Exportar Datos
-- Haz clic en "**💾 Descargar CSV**" o presiona `Ctrl+S`
-- Se descargará un archivo CSV con todos los datos del inventario
-- El archivo está optimizado para abrirse correctamente en Excel
-
-## 📤 Registrar Salidas
-
-### Cómo Registrar una Salida
-1. **Abrir formulario**: Haz clic en "Registrar Salida" en la barra de herramientas
-2. **Seleccionar producto**: Elige el producto que sale del almacén (solo aparecen productos con stock disponible)
-3. **Ingresar cantidad**: Especifica cuántas unidades salen
-4. **Responsable**: Ingresa el nombre de la persona responsable de la salida
-5. **Área destino**: Selecciona hacia dónde se dirige el producto
-6. **Observaciones**: Opcionalmente, agrega el motivo de la salida
-7. **Confirmar**: Revisa los datos y confirma la salida
-
-### Información de la Salida
-- **Fecha y hora**: Se registra automáticamente
-- **Stock actualizado**: Se reduce automáticamente el inventario
-- **Trazabilidad**: Queda registrado quién, cuándo y hacia dónde salió
-- **Validaciones**: No permite salidas superiores al stock disponible
-
-### Historial de Salidas
-- **Ver historial**: Haz clic en "Mostrar" en la sección "Historial de Salidas"
-- **Información detallada**: Fecha, producto, cantidad, responsable, destino y observaciones
-- **Stock restante**: Muestra cuánto queda disponible después de cada salida
-- **Acciones**: Editar o eliminar salidas registradas
-- **Exportar**: Descargar el historial completo en formato CSV
-
-### Áreas de Destino Disponibles
-- **OFICINA**: Material para uso en oficinas
-- **LIMPIEZA**: Productos para limpieza general
-- **TALLER**: Herramientas y repuestos para taller
-- **ENFERMERIA**: Material médico y sanitario
-- **VENTA**: Productos destinados a venta
-- **DESECHO**: Material para desechar
-- **OTRO**: Otros destinos no especificados
+#### Configuración Automática
+- **URL de API**: Se adapta automáticamente al dominio de Railway
+- **Base de Datos**: Conecta automáticamente a PostgreSQL
+- **Archivos Estáticos**: Se sirven automáticamente
+- **CSP**: Configurado para funcionar en cualquier entorno
 
 ## ⌨️ Atajos de Teclado
 
-| Atajo | Acción |
-|-------|--------|
-| `Ctrl + F` | Enfocar campo de búsqueda |
-| `Ctrl + N` | Agregar nuevo producto |
-| `Ctrl + S` | Exportar datos a CSV |
-| `Esc` | Limpiar búsqueda o cerrar formularios |
+- **Ctrl + F**: Enfocar barra de búsqueda
+- **Ctrl + N**: Agregar nuevo producto
+- **Ctrl + S**: Exportar datos a CSV
+- **Escape**: Limpiar búsqueda o cerrar formularios
 
-## 💾 Persistencia de Datos
+## 🎯 Áreas de Destino Disponibles
 
-El sistema utiliza **localStorage** del navegador para:
-- Guardar automáticamente todos los cambios
-- Mantener los datos entre sesiones
-- Preservar el contador de códigos de productos
-- Mantener la base de datos de proveedores
-- Sincronizar información entre productos y proveedores
-- Conservar el historial completo de salidas
-- Mantener la trazabilidad de movimientos de inventario
+- **OFICINA**: Material de oficina y administrativo
+- **LIMPIEZA**: Productos de limpieza y mantenimiento
+- **TALLER**: Herramientas y materiales técnicos
+- **ENFERMERIA**: Material médico y sanitario
 
-## 🎨 Características de Diseño
+## 🔧 Estructura del Proyecto
 
-### Interfaz Estilo Excel
-- Diseño familiar y profesional con iconos Font Awesome
-- Tabla con filas alternadas para mejor legibilidad
-- Colores distintivos por área de almacén
-- Alertas visuales para stock bajo
-- Iconos profesionales para todas las acciones y elementos
-
-### Responsive Design
-- Adaptable a diferentes tamaños de pantalla
-- Optimizado para dispositivos móviles y tablets
-- Interfaz intuitiva en todos los dispositivos
-
-### Indicadores Visuales
-- **Stock Bajo**: Fondo rojo para productos con ≤2 unidades
-- **Badges de Área**: Colores distintivos para cada área con iconos específicos
-- **Estadísticas**: Contadores en tiempo real en la barra superior con iconos
-- **Iconos Profesionales**: Font Awesome para todas las acciones y elementos
-- **Información de Proveedores**: Vista previa de datos del proveedor al seleccionarlo
-
-## 🔧 Personalización
-
-### Agregar Nuevas Áreas
-Para agregar una nueva área de almacén:
-
-1. **En `index.html`**:
-   ```html
-   <option value="NUEVA_AREA">NUEVA_AREA</option>
-   ```
-
-2. **En `styles.css`**:
-   ```css
-   .area-nueva_area { 
-       background: #color_fondo; 
-       color: #color_texto; 
-   }
-   ```
-
-### Modificar Límite de Stock Bajo
-En `script.js`, cambia la condición:
-```javascript
-const isLowStock = item.cantidad <= 2; // Cambiar el número 2
+```
+sistema-inventario/
+├── index.html              # Página principal
+├── styles.css              # Estilos CSS
+├── script_complete.js      # Lógica JavaScript del cliente
+├── server.js               # Servidor Express.js
+├── database_config.js      # Configuración de PostgreSQL
+├── package.json            # Dependencias Node.js
+├── railway.json            # Configuración de Railway
+├── railway_setup.sql       # Script de base de datos
+└── README.md               # Documentación
 ```
 
-## 🐛 Solución de Problemas
+## 🛡️ Seguridad y Rendimiento
 
-### Los datos no se guardan
-- Verifica que el navegador tenga habilitado localStorage
-- Asegúrate de no estar en modo incógnito
+### Transacciones Atómicas
+- Operaciones "todo o nada" para salidas
+- Integridad garantizada de los datos
+- Rollback automático en caso de errores
 
-### La tabla no se actualiza
-- Recarga la página (F5)
-- Verifica la consola del navegador para errores
+### Actualizaciones Optimistas
+- Interfaz responsiva sin recargas
+- Actualizaciones locales instantáneas
+- Sincronización automática con la base de datos
 
-### Problemas de exportación
-- Verifica que el navegador permita descargas
-- Asegúrate de tener permisos de escritura en la carpeta de descargas
+### Content Security Policy
+- CSP configurado para seguridad
+- Compatible con desarrollo y producción
+- Permite recursos necesarios de forma segura
 
-## 📊 Datos de Ejemplo
+## 🚀 Características Técnicas
 
-El sistema incluye datos de ejemplo para las siguientes áreas:
-- **OFICINA**: Ordenes de trabajo, hojas de colores, sobres, post-its, plumas
-- **LIMPIEZA**: Fabuloso, cloro
-- **TALLER**: Faros traseros, arrancador, focos H7
-- **ENFERMERIA**: (Preparado para agregar productos médicos)
+- **API REST**: Endpoints para CRUD completo
+- **Transacciones**: Operaciones atómicas con PostgreSQL
+- **Optimizaciones**: Actualizaciones locales para mejor rendimiento
+- **Responsive**: Funciona en desktop y móvil
+- **Escalable**: Arquitectura preparada para crecimiento
 
-## 🔄 Actualizaciones Futuras
+## 📄 Licencia
 
-### Funcionalidades Planificadas
-- [ ] Importación de datos desde CSV
-- [ ] Historial de movimientos
-- [ ] Alertas por email
-- [ ] Códigos de barras
-- [ ] Múltiples ubicaciones
-- [ ] Reportes avanzados
-
-## 📝 Licencia
-
-Este proyecto es de uso libre para fines educativos y comerciales.
-
-## 🤝 Contribuciones
-
-Las contribuciones son bienvenidas. Para contribuir:
-1. Fork el proyecto
-2. Crea una rama para tu feature
-3. Commit tus cambios
-4. Push a la rama
-5. Abre un Pull Request
-
----
-
-**Desarrollado con ❤️ para facilitar la gestión de inventarios**
+MIT License

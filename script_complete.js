@@ -1,7 +1,7 @@
 // Sistema de Inventario - JavaScript con Base de Datos PostgreSQL
 
-// Configuración de la API
-const API_BASE_URL = 'http://localhost:3000/api';
+// Configuración de la API - Rutas relativas para funcionar en cualquier entorno
+const API_BASE_URL = '/api';
 
 // Variables globales para datos
 let inventario = [];
@@ -631,7 +631,7 @@ async function initializeApp() {
         console.log('Sistema de Inventario inicializado correctamente con base de datos');
     } catch (error) {
         console.error('Error al inicializar la aplicación:', error);
-        alert('Error al conectar con la base de datos. Verifica que el servidor esté ejecutándose en http://localhost:3000');
+        alert('Error al conectar con la base de datos. Verifica que el servidor esté ejecutándose correctamente.');
     }
 }
 
