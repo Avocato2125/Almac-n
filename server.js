@@ -474,6 +474,10 @@ app.get('/api/health', async (req, res) => {
 
 // Ruta principal - servir la aplicación web
 app.get('/', (req, res) => {
+    // Headers para evitar caché
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
