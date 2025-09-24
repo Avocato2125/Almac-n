@@ -67,7 +67,7 @@ async function getAllProducts(filters = {}) {
             p.precio_compra,
             p.ubicacion,
             p.fecha_entrada,
-            EXTRACT(DAYS FROM (CURRENT_DATE - p.fecha_entrada)) as dias_en_stock,
+            (CURRENT_DATE - p.fecha_entrada) as dias_en_stock,
             CASE 
                 WHEN p.cantidad <= p.minima THEN 'STOCK BAJO'
                 ELSE 'OK'
@@ -121,7 +121,7 @@ async function getProductByCode(codigo) {
             p.precio_compra,
             p.ubicacion,
             p.fecha_entrada,
-            EXTRACT(DAYS FROM (CURRENT_DATE - p.fecha_entrada)) as dias_en_stock,
+            (CURRENT_DATE - p.fecha_entrada) as dias_en_stock,
             CASE 
                 WHEN p.cantidad <= p.minima THEN 'STOCK BAJO'
                 ELSE 'OK'
@@ -359,7 +359,7 @@ async function getLowStockProducts() {
             p.precio_compra,
             p.ubicacion,
             p.fecha_entrada,
-            EXTRACT(DAYS FROM (CURRENT_DATE - p.fecha_entrada)) as dias_en_stock,
+            (CURRENT_DATE - p.fecha_entrada) as dias_en_stock,
             CASE 
                 WHEN p.cantidad <= p.minima THEN 'STOCK BAJO'
                 ELSE 'OK'
