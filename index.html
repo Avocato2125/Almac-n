@@ -38,7 +38,7 @@
             </div>
             <button class="btn" onclick="toggleAddForm()" title="Agregar nuevo producto (Ctrl+N)"><i class="fas fa-plus"></i> Agregar Producto</button>
             <button class="btn" onclick="toggleOutputForm()" title="Registrar salida de productos"><i class="fas fa-arrow-right"></i> Registrar Salida</button>
-            <button class="btn" onclick="toggleProviderForm()" title="Gestionar proveedores"><i class="fas fa-truck"></i> Proveedores</button>
+            <button class="btn" onclick="toggleProviderSection()" title="Gestionar proveedores"><i class="fas fa-truck"></i> Proveedores</button>
             <button class="btn" onclick="exportData()" title="Exportar a CSV (Ctrl+S)"><i class="fas fa-download"></i> Descargar CSV</button>
             <button class="btn" onclick="showSummary()" title="Ver resumen por área"><i class="fas fa-chart-bar"></i> Resumen</button>
             
@@ -105,7 +105,7 @@
                         <select id="newProveedor" onchange="updateProviderInfo()">
                             <option value="">Seleccionar proveedor...</option>
                         </select>
-                        <button type="button" class="btn" onclick="toggleProviderForm()" style="margin-top: 5px; padding: 3px 8px; font-size: 11px;"><i class="fas fa-plus"></i> Nuevo</button>
+                        <button type="button" class="btn" onclick="toggleProviderSection()" style="margin-top: 5px; padding: 3px 8px; font-size: 11px;"><i class="fas fa-plus"></i> Nuevo</button>
                     </td>
                     <td style="border: none; padding: 5px; vertical-align: top;">
                         <div class="field-label">
@@ -309,7 +309,7 @@
     </div>
 
     <!-- Scripts -->
-    <script src="script_complete.js?v=1.1"></script>
+    <script src="script_complete.js?v=1.2"></script>
     
     <!-- Estilos adicionales para animaciones -->
     <style>

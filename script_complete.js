@@ -602,7 +602,7 @@ async function clearSearch() {
  * Exporta los datos a CSV
  */
 function exportData() {
-    const data = getCurrentFilteredData();
+    const data = inventario; // Usar la variable global directamente
     const headers = ['Código', 'Nombre', 'Área', 'Cantidad', 'Mínima', 'Unidad', 'Precio', 'Ubicación', 'Proveedor', 'Contacto', 'Fecha', 'Estado', 'Días en Stock'];
     
     let csv = headers.join(',') + '\n';
@@ -640,6 +640,116 @@ function exportData() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+}
+
+/**
+ * Muestra un resumen de productos por área
+ */
+function showSummary() {
+    const areaGroups = {};
+    let totalGeneral = 0;
+    let totalValueGeneral = 0;
+    
+    // Agrupar productos por área
+    inventario.forEach(item => {
+        const area = item.area || 'SIN ÁREA';
+        if (!areaGroups[area]) {
+            areaGroups[area] = {
+                total: 0,
+                stockBajo: 0,
+                valorTotal: 0
+            };
+        }
+        
+        areaGroups[area].total += parseInt(item.cantidad) || 0;
+        totalGeneral += parseInt(item.cantidad) || 0;
+        
+        const precio = parseFloat(item.precio_compra) || 0;
+        const cantidad = parseInt(item.cantidad) || 0;
+        const valorArea = precio * cantidad;
+        areaGroups[area].valorTotal += valorArea;
+        totalValueGeneral += valorArea;
+        
+        const minima = parseInt(item.cantidad_minima) || parseInt(item.minima) || 2;
+        if ((parseInt(item.cantidad) || 0) <= minima) {
+            areaGroups[area].stockBajo++;
+        }
+    });
+    
+    // Crear HTML del resumen
+    let summaryHTML = `
+        <div style="background: white; border: 2px solid #007bff; border-radius: 8px; padding: 20px; margin: 20px; max-width: 600px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <h3 style="color: #007bff; margin-top: 0; text-align: center;"><i class="fas fa-chart-bar"></i> Resumen por Área</h3>
+            <div style="margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px; text-align: center;">
+                <strong>Total General: ${totalGeneral} productos | Valor Total: $${totalValueGeneral.toLocaleString('es-MX', {minimumFractionDigits: 2})}</strong>
+            </div>
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #007bff; color: white;">
+                        <th style="padding: 8px; border: 1px solid #ddd;">Área</th>
+                        <th style="padding: 8px; border: 1px solid #ddd;">Cantidad</th>
+                        <th style="padding: 8px; border: 1px solid #ddd;">Stock Bajo</th>
+                        <th style="padding: 8px; border: 1px solid #ddd;">Valor Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    // Agregar filas por área
+    Object.keys(areaGroups).sort().forEach(area => {
+        const group = areaGroups[area];
+        const stockBajoStyle = group.stockBajo > 0 ? 'color: #dc3545; font-weight: bold;' : '';
+        summaryHTML += `
+            <tr>
+                <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">${area}</td>
+                <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${group.total}</td>
+                <td style="padding: 8px; border: 1px solid #ddd; text-align: center; ${stockBajoStyle}">${group.stockBajo}</td>
+                <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">$${group.valorTotal.toLocaleString('es-MX', {minimumFractionDigits: 2})}</td>
+            </tr>
+        `;
+    });
+    
+    summaryHTML += `
+                </tbody>
+            </table>
+            <div style="text-align: center; margin-top: 15px;">
+                <button onclick="this.parentElement.parentElement.remove()" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                    <i class="fas fa-times"></i> Cerrar
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // Mostrar el resumen
+    const existingSummary = document.querySelector('[data-summary-modal]');
+    if (existingSummary) {
+        existingSummary.remove();
+    }
+    
+    const summaryModal = document.createElement('div');
+    summaryModal.setAttribute('data-summary-modal', 'true');
+    summaryModal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+    `;
+    summaryModal.innerHTML = summaryHTML;
+    
+    document.body.appendChild(summaryModal);
+    
+    // Cerrar al hacer clic fuera del modal
+    summaryModal.addEventListener('click', (e) => {
+        if (e.target === summaryModal) {
+            summaryModal.remove();
+        }
+    });
 }
 
 /**
