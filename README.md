@@ -52,12 +52,15 @@ cd sistema-inventario
 # Instalar dependencias
 npm install
 
-# Iniciar servidor
+# Para desarrollo (con variables de entorno desde .env)
+npm run dev
+
+# Para producción
 npm start
 ```
 
 #### Uso Local
-1. Ejecuta `npm start` para iniciar el servidor
+1. Ejecuta `npm run dev` para desarrollo (con dotenv) o `npm start` para producción
 2. Abre `index.html` en tu navegador
 3. El sistema se conectará automáticamente a la base de datos
 
