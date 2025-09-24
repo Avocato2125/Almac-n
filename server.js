@@ -26,9 +26,15 @@ app.use(express.static(path.join(__dirname)));
 // ============================================
 
 // Obtener todos los productos
+// Obtener todos los productos (con búsqueda y filtrado)
 app.get('/api/productos', async (req, res) => {
     try {
-        const productos = await db.getAllProducts();
+        // Extraemos los parámetros de consulta (search y area) de la URL
+        const { search, area } = req.query;
+        
+        // Pasamos los filtros a la función de la base de datos
+        const productos = await db.getAllProducts({ search, area });
+        
         res.json({
             success: true,
             data: productos,
@@ -152,45 +158,6 @@ app.delete('/api/productos/:codigo', async (req, res) => {
     }
 });
 
-// Buscar productos
-app.get('/api/productos/search/:term', async (req, res) => {
-    try {
-        const { term } = req.params;
-        const productos = await db.searchProducts(term);
-        
-        res.json({
-            success: true,
-            data: productos,
-            count: productos.length
-        });
-    } catch (error) {
-        console.error('Error al buscar productos:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Error interno del servidor'
-        });
-    }
-});
-
-// Filtrar productos por área
-app.get('/api/productos/area/:area', async (req, res) => {
-    try {
-        const { area } = req.params;
-        const productos = await db.filterProductsByArea(area);
-        
-        res.json({
-            success: true,
-            data: productos,
-            count: productos.length
-        });
-    } catch (error) {
-        console.error('Error al filtrar productos:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Error interno del servidor'
-        });
-    }
-});
 
 // ============================================
 // RUTAS PARA PROVEEDORES

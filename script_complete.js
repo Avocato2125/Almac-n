@@ -16,32 +16,44 @@ let nextOutputId = 1;
 /**
  * Carga todos los datos desde la base de datos
  */
-async function loadDataFromDatabase() {
+async function loadDataFromDatabase(filters = {}) {
     try {
-        // Cargar productos
-        const productosResponse = await fetch(`${API_BASE_URL}/productos`);
+        // Construir URL con parámetros de consulta
+        const url = new URL(`${API_BASE_URL}/productos`, window.location.origin);
+        if (filters.search) url.searchParams.append('search', filters.search);
+        if (filters.area) url.searchParams.append('area', filters.area);
+        
+        // Cargar productos con filtros
+        const productosResponse = await fetch(url.toString());
         const productosData = await productosResponse.json();
         inventario = productosData.success ? productosData.data : [];
         
-        // Cargar proveedores
-        const proveedoresResponse = await fetch(`${API_BASE_URL}/proveedores`);
-        const proveedoresData = await proveedoresResponse.json();
-        proveedores = proveedoresData.success ? proveedoresData.data : [];
+        // Cargar proveedores (solo si no hay filtros, para evitar cargas innecesarias)
+        if (!filters.search && !filters.area) {
+            const proveedoresResponse = await fetch(`${API_BASE_URL}/proveedores`);
+            const proveedoresData = await proveedoresResponse.json();
+            proveedores = proveedoresData.success ? proveedoresData.data : [];
+        }
         
-        // Cargar salidas
-        const salidasResponse = await fetch(`${API_BASE_URL}/salidas`);
-        const salidasData = await salidasResponse.json();
-        salidas = salidasData.success ? salidasData.data : [];
+        // Cargar salidas (solo si no hay filtros, para evitar cargas innecesarias)
+        if (!filters.search && !filters.area) {
+            const salidasResponse = await fetch(`${API_BASE_URL}/salidas`);
+            const salidasData = await salidasResponse.json();
+            salidas = salidasData.success ? salidasData.data : [];
+        }
         
-        // Obtener siguiente código
-        const nextCodeResponse = await fetch(`${API_BASE_URL}/next-code`);
-        const nextCodeData = await nextCodeResponse.json();
-        nextCode = nextCodeData.success ? nextCodeData.data.nextCode : 1;
+        // Obtener siguiente código (solo si no hay filtros)
+        if (!filters.search && !filters.area) {
+            const nextCodeResponse = await fetch(`${API_BASE_URL}/next-code`);
+            const nextCodeData = await nextCodeResponse.json();
+            nextCode = nextCodeData.success ? nextCodeData.data.nextCode : 1;
+        }
         
         console.log('Datos cargados desde la base de datos:', {
             productos: inventario.length,
             proveedores: proveedores.length,
-            salidas: salidas.length
+            salidas: salidas.length,
+            filtros: filters
         });
         
     } catch (error) {
@@ -216,6 +228,20 @@ async function deleteProviderFromDatabase(id) {
 // ===== FUNCIONES DE UTILIDAD =====
 
 /**
+ * Retrasa la ejecución de una función hasta que haya pasado un tiempo sin que se llame.
+ * Útil para optimizar búsquedas y evitar demasiadas peticiones a la API.
+ */
+function debounce(func, delay = 300) {
+    let timeout;
+    return (...args) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            func.apply(this, args);
+        }, delay);
+    };
+}
+
+/**
  * Calcula los días que un producto ha estado en stock
  */
 function calcularDiasEnStock(fecha) {
@@ -282,7 +308,8 @@ function validateCurrency(value) {
 /**
  * Renderiza la tabla con los datos proporcionados
  */
-function renderTable(data = inventario) {
+function renderTable() {
+    const data = inventario;
     const tbody = document.getElementById('tableBody');
     if (!tbody) {
         console.error('Elemento tableBody no encontrado');
@@ -531,39 +558,43 @@ function updateProviderSelect() {
 }
 
 /**
- * Obtiene los datos filtrados actuales
+ * Obtiene los filtros actuales del formulario
  */
-function getCurrentFilteredData() {
-    const searchTerm = document.getElementById('searchBox')?.value?.toLowerCase() || '';
+function getCurrentFilters() {
+    const searchTerm = document.getElementById('searchBox')?.value?.trim() || '';
     const areaFilter = document.getElementById('areaFilter')?.value || '';
     
-    let filtered = inventario;
+    const filters = {};
+    if (searchTerm) filters.search = searchTerm;
+    if (areaFilter) filters.area = areaFilter;
     
-    if (searchTerm) {
-        filtered = filtered.filter(item => 
-            item.nombre.toLowerCase().includes(searchTerm) ||
-            item.codigo.toString().includes(searchTerm)
-        );
-    }
-    
-    if (areaFilter) {
-        filtered = filtered.filter(item => item.area === areaFilter);
-    }
-    
-    return filtered;
+    return filters;
+}
+
+/**
+ * Aplica filtros y recarga datos desde la API
+ */
+async function applyFilters() {
+    const filters = getCurrentFilters();
+    await loadDataFromDatabase(filters);
+    renderTable();
+    updateStats();
 }
 
 /**
  * Limpia la búsqueda
  */
-function clearSearch() {
+async function clearSearch() {
     const searchBox = document.getElementById('searchBox');
     const areaFilter = document.getElementById('areaFilter');
     
     if (searchBox) searchBox.value = '';
     if (areaFilter) areaFilter.value = '';
     
+    // Recargar todos los datos sin filtros
+    await loadDataFromDatabase();
     renderTable();
+    updateStats();
     if (searchBox) searchBox.focus();
 }
 
@@ -643,14 +674,15 @@ function setupEventListeners() {
     const areaFilter = document.getElementById('areaFilter');
     
     if (searchBox) {
-        searchBox.addEventListener('input', () => {
-            renderTable(getCurrentFilteredData());
-        });
+        // Envolvemos la llamada a applyFilters en nuestro debounce
+        searchBox.addEventListener('input', debounce(() => {
+            applyFilters();
+        }, 300)); // Espera 300ms después de la última tecla antes de buscar
     }
     
     if (areaFilter) {
         areaFilter.addEventListener('change', () => {
-            renderTable(getCurrentFilteredData());
+            applyFilters();
         });
     }
     

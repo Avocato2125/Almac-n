@@ -55,8 +55,8 @@ async function testConnection() {
 // FUNCIONES PARA PRODUCTOS
 // ============================================
 
-async function getAllProducts() {
-    const queryText = `
+async function getAllProducts(filters = {}) {
+    let queryText = `
         SELECT 
             p.codigo,
             p.nombre,
@@ -78,9 +78,34 @@ async function getAllProducts() {
             prov.contacto as contacto_proveedor
         FROM productos p
         LEFT JOIN proveedores prov ON p.proveedor_id = prov.id
-        ORDER BY p.codigo ASC
     `;
-    const result = await query(queryText);
+
+    const conditions = [];
+    const values = [];
+    let paramCount = 1;
+
+    // Si se proporciona un término de búsqueda
+    if (filters.search) {
+        conditions.push(`(p.nombre ILIKE $${paramCount} OR p.codigo ILIKE $${paramCount})`);
+        values.push(`%${filters.search}%`);
+        paramCount++;
+    }
+
+    // Si se proporciona un filtro de área
+    if (filters.area) {
+        conditions.push(`p.area = $${paramCount}`);
+        values.push(filters.area);
+        paramCount++;
+    }
+
+    // Si hay condiciones, las añadimos a la consulta con WHERE
+    if (conditions.length > 0) {
+        queryText += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    queryText += ' ORDER BY p.codigo ASC';
+    
+    const result = await query(queryText, values);
     return result.rows;
 }
 
@@ -362,65 +387,6 @@ async function getNextProductCode() {
     return result.rows[0].next_code;
 }
 
-async function searchProducts(searchTerm) {
-    const queryText = `
-        SELECT 
-            p.codigo,
-            p.nombre,
-            p.area,
-            p.cantidad,
-            p.minima as cantidad_minima,
-            p.unidad,
-            p.precio_compra,
-            p.ubicacion,
-            p.fecha_entrada,
-            EXTRACT(DAYS FROM (CURRENT_DATE - p.fecha_entrada)) as dias_en_stock,
-            CASE 
-                WHEN p.cantidad <= p.minima THEN 'STOCK BAJO'
-                ELSE 'OK'
-            END as estado_stock,
-            prov.nombre as proveedor_nombre,
-            prov.telefono as proveedor_telefono,
-            prov.email as proveedor_email,
-            prov.contacto as contacto_proveedor
-        FROM productos p
-        LEFT JOIN proveedores prov ON p.proveedor_id = prov.id
-        WHERE p.nombre ILIKE $1 OR p.codigo ILIKE $1
-        ORDER BY p.codigo ASC
-    `;
-    const result = await query(queryText, [`%${searchTerm}%`]);
-    return result.rows;
-}
-
-async function filterProductsByArea(area) {
-    const queryText = `
-        SELECT 
-            p.codigo,
-            p.nombre,
-            p.area,
-            p.cantidad,
-            p.minima as cantidad_minima,
-            p.unidad,
-            p.precio_compra,
-            p.ubicacion,
-            p.fecha_entrada,
-            EXTRACT(DAYS FROM (CURRENT_DATE - p.fecha_entrada)) as dias_en_stock,
-            CASE 
-                WHEN p.cantidad <= p.minima THEN 'STOCK BAJO'
-                ELSE 'OK'
-            END as estado_stock,
-            prov.nombre as proveedor_nombre,
-            prov.telefono as proveedor_telefono,
-            prov.email as proveedor_email,
-            prov.contacto as contacto_proveedor
-        FROM productos p
-        LEFT JOIN proveedores prov ON p.proveedor_id = prov.id
-        WHERE p.area = $1
-        ORDER BY p.codigo ASC
-    `;
-    const result = await query(queryText, [area]);
-    return result.rows;
-}
 
 // Cerrar el pool de conexiones
 async function closePool() {
@@ -442,8 +408,6 @@ module.exports = {
     deleteProduct,
     updateProductStock,
     getNextProductCode,
-    searchProducts,
-    filterProductsByArea,
     
     // Proveedores
     getAllProviders,
