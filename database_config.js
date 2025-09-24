@@ -15,17 +15,25 @@ const dbConfig = {
 // Crear pool de conexiones
 const pool = new Pool(dbConfig);
 
-// Función para ejecutar consultas
-async function query(text, params) {
+// ============================================
+// FUNCIONES DE MANEJO DE CONEXIÓN
+// ============================================
+
+// Obtener un cliente de la pool para transacciones
+async function getClient() {
     const client = await pool.connect();
+    return client;
+}
+
+// Función para ejecutar consultas - Modificada para soportar transacciones
+async function query(text, params, client = null) {
+    const target = client || pool; // Usa el cliente si se proporciona, si no, la pool
     try {
-        const result = await client.query(text, params);
+        const result = await target.query(text, params);
         return result;
     } catch (error) {
-        console.error('Error en consulta SQL:', error);
+        console.error('Error en consulta SQL:', { text, params, error });
         throw error;
-    } finally {
-        client.release();
     }
 }
 
@@ -249,7 +257,8 @@ async function getAllOutputs() {
     return result.rows;
 }
 
-async function createOutput(outputData) {
+// Crear salida - Puede usarse en transacciones
+async function createOutput(outputData, client = null) {
     const {
         codigo_producto, cantidad, responsable, area_destino, observaciones
     } = outputData;
@@ -262,14 +271,34 @@ async function createOutput(outputData) {
     
     const result = await query(queryText, [
         codigo_producto, cantidad, responsable, area_destino, observaciones
-    ]);
+    ], client);
     
     return result.rows[0];
 }
 
-async function deleteOutput(id) {
+// Eliminar salida - Puede usarse en transacciones
+async function deleteOutput(id, client = null) {
     const queryText = 'DELETE FROM salidas WHERE id = $1 RETURNING *';
-    const result = await query(queryText, [id]);
+    const result = await query(queryText, [id], client);
+    return result.rows[0];
+}
+
+// Obtener salida por ID - Necesaria para transacciones de eliminación
+async function getOutputById(id, client = null) {
+    const queryText = 'SELECT * FROM salidas WHERE id = $1';
+    const result = await query(queryText, [id], client);
+    return result.rows[0];
+}
+
+// Actualizar stock de producto - Función específica para transacciones
+async function updateProductStock(codigo, nuevaCantidad, client = null) {
+    const queryText = `
+        UPDATE productos 
+        SET cantidad = $1
+        WHERE codigo = $2
+        RETURNING *
+    `;
+    const result = await query(queryText, [nuevaCantidad, codigo], client);
     return result.rows[0];
 }
 
@@ -411,6 +440,7 @@ module.exports = {
     createProduct,
     updateProduct,
     deleteProduct,
+    updateProductStock,
     getNextProductCode,
     searchProducts,
     filterProductsByArea,
@@ -426,6 +456,10 @@ module.exports = {
     getAllOutputs,
     createOutput,
     deleteOutput,
+    getOutputById,
+    
+    // Transacciones
+    getClient,
     
     // Estadísticas
     getStatistics,

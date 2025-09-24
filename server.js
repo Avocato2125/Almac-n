@@ -339,69 +339,94 @@ app.get('/api/salidas', async (req, res) => {
 
 // Crear nueva salida
 app.post('/api/salidas', async (req, res) => {
+    // Inicia un cliente de la pool para la transacción
+    const client = await db.getClient(); 
+
     try {
         const salidaData = req.body;
         
-        // Verificar que el producto existe y tiene stock suficiente
-        const producto = await db.getProductByCode(salidaData.codigo_producto);
+        // Iniciar la transacción
+        await client.query('BEGIN');
+
+        // 1. Verificar que el producto existe y tiene stock suficiente
+        const productoResult = await client.query('SELECT * FROM productos WHERE codigo = $1 FOR UPDATE', [salidaData.codigo_producto]);
+        const producto = productoResult.rows[0];
+
         if (!producto) {
-            return res.status(404).json({
-                success: false,
-                error: 'Producto no encontrado'
-            });
+            await client.query('ROLLBACK'); // Revertir la transacción
+            return res.status(404).json({ success: false, error: 'Producto no encontrado' });
         }
         
         if (producto.cantidad < salidaData.cantidad) {
-            return res.status(400).json({
-                success: false,
-                error: 'Stock insuficiente'
-            });
+            await client.query('ROLLBACK'); // Revertir la transacción
+            return res.status(400).json({ success: false, error: 'Stock insuficiente' });
         }
         
-        // Crear la salida
-        const nuevaSalida = await db.createOutput(salidaData);
+        // 2. Crear la salida
+        const nuevaSalida = await db.createOutput(salidaData, client); // Pasamos el cliente para usarlo en la transacción
         
-        // Actualizar el stock del producto
+        // 3. Actualizar el stock del producto
         const nuevoStock = producto.cantidad - salidaData.cantidad;
-        await db.updateProduct(salidaData.codigo_producto, { cantidad: nuevoStock });
+        await db.updateProductStock(salidaData.codigo_producto, nuevoStock, client); // Pasamos el cliente
         
+        // Si todo salió bien, confirmar la transacción
+        await client.query('COMMIT');
+
         res.status(201).json({
             success: true,
             data: nuevaSalida,
             message: 'Salida registrada exitosamente'
         });
+
     } catch (error) {
+        // Si algo falla, revertir todos los cambios
+        await client.query('ROLLBACK');
         console.error('Error al crear salida:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Error interno del servidor'
-        });
+        res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    } finally {
+        // Siempre liberar el cliente de vuelta a la pool
+        client.release();
     }
 });
 
-// Eliminar salida
+// Eliminar salida (y restaurar el stock usando una transacción)
 app.delete('/api/salidas/:id', async (req, res) => {
+    const client = await db.getClient();
     try {
         const { id } = req.params;
-        const salidaEliminada = await db.deleteOutput(id);
-        
-        if (!salidaEliminada) {
-            return res.status(404).json({
-                success: false,
-                error: 'Salida no encontrada'
-            });
+
+        await client.query('BEGIN');
+
+        // 1. Obtener la salida que se va a eliminar para saber qué producto y cantidad restaurar
+        const salida = await db.getOutputById(id, client);
+
+        if (!salida) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ success: false, error: 'Salida no encontrada' });
         }
-        
-        res.json({
-            success: true,
-            message: 'Salida eliminada exitosamente'
-        });
+
+        // 2. Eliminar la salida
+        await db.deleteOutput(id, client);
+
+        // 3. Restaurar el stock del producto correspondiente
+        const productoResult = await client.query('SELECT * FROM productos WHERE codigo = $1 FOR UPDATE', [salida.producto_codigo]);
+        const producto = productoResult.rows[0];
+
+        if (producto) {
+            const stockRestaurado = producto.cantidad + salida.cantidad;
+            await db.updateProductStock(salida.producto_codigo, stockRestaurado, client);
+        }
+
+        await client.query('COMMIT');
+
+        res.json({ success: true, message: 'Salida eliminada y stock restaurado' });
+
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('Error al eliminar salida:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Error interno del servidor'
-        });
+        res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    } finally {
+        client.release();
     }
 });
 
