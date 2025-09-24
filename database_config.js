@@ -3,10 +3,10 @@
 
 const { Pool } = require('pg');
 
-// Configuración de conexión a PostgreSQL
+// Configuración de conexión a PostgreSQL Railway
 const dbConfig = {
     connectionString: process.env.DATABASE_URL || 'postgresql://postgres:VsSTUIDZQfFqDBwBshBjZcjqxoPRPoTF@postgres.railway.internal:5432/railway',
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    ssl: { rejectUnauthorized: false }, // Railway requiere SSL
     max: 20, // Máximo número de conexiones en el pool
     idleTimeoutMillis: 30000, // Tiempo de espera antes de cerrar conexiones inactivas
     connectionTimeoutMillis: 2000, // Tiempo de espera para establecer conexión
@@ -49,15 +49,58 @@ async function testConnection() {
 
 async function getAllProducts() {
     const queryText = `
-        SELECT * FROM vista_productos_completa
-        ORDER BY codigo ASC
+        SELECT 
+            p.codigo,
+            p.nombre,
+            p.area,
+            p.cantidad,
+            p.minima as cantidad_minima,
+            p.unidad,
+            p.precio_compra,
+            p.ubicacion,
+            p.fecha_entrada,
+            EXTRACT(DAYS FROM (CURRENT_DATE - p.fecha_entrada)) as dias_en_stock,
+            CASE 
+                WHEN p.cantidad <= p.minima THEN 'STOCK BAJO'
+                ELSE 'OK'
+            END as estado_stock,
+            prov.nombre as proveedor_nombre,
+            prov.telefono as proveedor_telefono,
+            prov.email as proveedor_email,
+            prov.contacto as contacto_proveedor
+        FROM productos p
+        LEFT JOIN proveedores prov ON p.proveedor_id = prov.id
+        ORDER BY p.codigo ASC
     `;
     const result = await query(queryText);
     return result.rows;
 }
 
 async function getProductByCode(codigo) {
-    const queryText = 'SELECT * FROM vista_productos_completa WHERE codigo = $1';
+    const queryText = `
+        SELECT 
+            p.codigo,
+            p.nombre,
+            p.area,
+            p.cantidad,
+            p.minima as cantidad_minima,
+            p.unidad,
+            p.precio_compra,
+            p.ubicacion,
+            p.fecha_entrada,
+            EXTRACT(DAYS FROM (CURRENT_DATE - p.fecha_entrada)) as dias_en_stock,
+            CASE 
+                WHEN p.cantidad <= p.minima THEN 'STOCK BAJO'
+                ELSE 'OK'
+            END as estado_stock,
+            prov.nombre as proveedor_nombre,
+            prov.telefono as proveedor_telefono,
+            prov.email as proveedor_email,
+            prov.contacto as contacto_proveedor
+        FROM productos p
+        LEFT JOIN proveedores prov ON p.proveedor_id = prov.id
+        WHERE p.codigo = $1
+    `;
     const result = await query(queryText, [codigo]);
     return result.rows[0];
 }
@@ -65,19 +108,19 @@ async function getProductByCode(codigo) {
 async function createProduct(productData) {
     const {
         codigo, nombre, area, cantidad, cantidad_minima, unidad,
-        precio_compra, ubicacion, proveedor_id, contacto_proveedor
+        precio_compra, ubicacion, proveedor_id
     } = productData;
     
     const queryText = `
-        INSERT INTO productos (codigo, nombre, area, cantidad, cantidad_minima, unidad, 
-                             precio_compra, ubicacion, proveedor_id, contacto_proveedor, fecha_entrada)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_DATE)
+        INSERT INTO productos (codigo, nombre, area, cantidad, minima, unidad, 
+                             precio_compra, ubicacion, proveedor_id, fecha_entrada)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_DATE)
         RETURNING *
     `;
     
     const result = await query(queryText, [
         codigo, nombre, area, cantidad, cantidad_minima, unidad,
-        precio_compra, ubicacion, proveedor_id, contacto_proveedor
+        precio_compra, ubicacion, proveedor_id
     ]);
     
     return result.rows[0];
@@ -87,6 +130,12 @@ async function updateProduct(codigo, updateData) {
     const fields = [];
     const values = [];
     let paramCount = 1;
+    
+    // Mapear cantidad_minima a minima para coincidir con el esquema
+    if (updateData.cantidad_minima !== undefined) {
+        updateData.minima = updateData.cantidad_minima;
+        delete updateData.cantidad_minima;
+    }
     
     Object.keys(updateData).forEach(key => {
         if (updateData[key] !== undefined) {
@@ -109,7 +158,7 @@ async function updateProduct(codigo, updateData) {
 }
 
 async function deleteProduct(codigo) {
-    const queryText = 'UPDATE productos SET activo = FALSE WHERE codigo = $1 RETURNING *';
+    const queryText = 'DELETE FROM productos WHERE codigo = $1 RETURNING *';
     const result = await query(queryText, [codigo]);
     return result.rows[0];
 }
@@ -119,27 +168,27 @@ async function deleteProduct(codigo) {
 // ============================================
 
 async function getAllProviders() {
-    const queryText = 'SELECT * FROM proveedores WHERE activo = TRUE ORDER BY nombre ASC';
+    const queryText = 'SELECT * FROM proveedores ORDER BY nombre ASC';
     const result = await query(queryText);
     return result.rows;
 }
 
 async function getProviderById(id) {
-    const queryText = 'SELECT * FROM proveedores WHERE id = $1 AND activo = TRUE';
+    const queryText = 'SELECT * FROM proveedores WHERE id = $1';
     const result = await query(queryText, [id]);
     return result.rows[0];
 }
 
 async function createProvider(providerData) {
-    const { nombre, rfc, telefono, email, direccion, contacto } = providerData;
+    const { nombre, rfc, telefono, email, contacto } = providerData;
     
     const queryText = `
-        INSERT INTO proveedores (nombre, rfc, telefono, email, direccion, contacto)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO proveedores (nombre, rfc, telefono, email, contacto)
+        VALUES ($1, $2, $3, $4, $5)
         RETURNING *
     `;
     
-    const result = await query(queryText, [nombre, rfc, telefono, email, direccion, contacto]);
+    const result = await query(queryText, [nombre, rfc, telefono, email, contacto]);
     return result.rows[0];
 }
 
@@ -169,7 +218,7 @@ async function updateProvider(id, updateData) {
 }
 
 async function deleteProvider(id) {
-    const queryText = 'UPDATE proveedores SET activo = FALSE WHERE id = $1 RETURNING *';
+    const queryText = 'DELETE FROM proveedores WHERE id = $1 RETURNING *';
     const result = await query(queryText, [id]);
     return result.rows[0];
 }
@@ -179,27 +228,40 @@ async function deleteProvider(id) {
 // ============================================
 
 async function getAllOutputs() {
-    const queryText = 'SELECT * FROM vista_salidas_completa ORDER BY fecha DESC';
+    const queryText = `
+        SELECT 
+            s.id,
+            s.fecha,
+            s.producto_codigo as codigo_producto,
+            p.nombre as nombre_producto,
+            s.cantidad,
+            p.unidad,
+            s.responsable,
+            s.area_destino,
+            s.observaciones,
+            s.cantidad as stock_anterior,
+            (p.cantidad + s.cantidad) as stock_restante
+        FROM salidas s
+        LEFT JOIN productos p ON s.producto_codigo = p.codigo
+        ORDER BY s.fecha DESC
+    `;
     const result = await query(queryText);
     return result.rows;
 }
 
 async function createOutput(outputData) {
     const {
-        producto_id, codigo_producto, nombre_producto, cantidad, unidad,
-        responsable, area_destino, observaciones, stock_anterior, stock_restante
+        codigo_producto, cantidad, responsable, area_destino, observaciones
     } = outputData;
     
     const queryText = `
-        INSERT INTO salidas (producto_id, codigo_producto, nombre_producto, cantidad, unidad,
-                           responsable, area_destino, observaciones, stock_anterior, stock_restante)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        INSERT INTO salidas (producto_codigo, cantidad, responsable, area_destino, observaciones)
+        VALUES ($1, $2, $3, $4, $5)
         RETURNING *
     `;
     
     const result = await query(queryText, [
-        producto_id, codigo_producto, nombre_producto, cantidad, unidad,
-        responsable, area_destino, observaciones, stock_anterior, stock_restante
+        codigo_producto, cantidad, responsable, area_destino, observaciones
     ]);
     
     return result.rows[0];
@@ -216,16 +278,46 @@ async function deleteOutput(id) {
 // ============================================
 
 async function getStatistics() {
-    const queryText = 'SELECT * FROM vista_estadisticas_areas ORDER BY area';
+    const queryText = `
+        SELECT 
+            area,
+            COUNT(*) as total_productos,
+            SUM(cantidad) as total_cantidad,
+            SUM(CASE WHEN cantidad <= minima THEN 1 ELSE 0 END) as productos_stock_bajo,
+            AVG(EXTRACT(DAYS FROM (CURRENT_DATE - fecha_entrada))) as promedio_dias_stock
+        FROM productos
+        GROUP BY area
+        ORDER BY area
+    `;
     const result = await query(queryText);
     return result.rows;
 }
 
 async function getLowStockProducts() {
     const queryText = `
-        SELECT * FROM vista_productos_completa 
-        WHERE cantidad <= cantidad_minima 
-        ORDER BY (cantidad - cantidad_minima) ASC
+        SELECT 
+            p.codigo,
+            p.nombre,
+            p.area,
+            p.cantidad,
+            p.minima as cantidad_minima,
+            p.unidad,
+            p.precio_compra,
+            p.ubicacion,
+            p.fecha_entrada,
+            EXTRACT(DAYS FROM (CURRENT_DATE - p.fecha_entrada)) as dias_en_stock,
+            CASE 
+                WHEN p.cantidad <= p.minima THEN 'STOCK BAJO'
+                ELSE 'OK'
+            END as estado_stock,
+            prov.nombre as proveedor_nombre,
+            prov.telefono as proveedor_telefono,
+            prov.email as proveedor_email,
+            prov.contacto as contacto_proveedor
+        FROM productos p
+        LEFT JOIN proveedores prov ON p.proveedor_id = prov.id
+        WHERE p.cantidad <= p.minima 
+        ORDER BY (p.cantidad - p.minima) ASC
     `;
     const result = await query(queryText);
     return result.rows;
@@ -236,23 +328,67 @@ async function getLowStockProducts() {
 // ============================================
 
 async function getNextProductCode() {
-    const queryText = 'SELECT COALESCE(MAX(codigo), 0) + 1 as next_code FROM productos';
+    const queryText = 'SELECT COALESCE(MAX(CAST(codigo AS INTEGER)), 0) + 1 as next_code FROM productos WHERE codigo ~ \'^[0-9]+$\'';
     const result = await query(queryText);
     return result.rows[0].next_code;
 }
 
 async function searchProducts(searchTerm) {
     const queryText = `
-        SELECT * FROM vista_productos_completa 
-        WHERE nombre ILIKE $1 OR codigo::text ILIKE $1
-        ORDER BY codigo ASC
+        SELECT 
+            p.codigo,
+            p.nombre,
+            p.area,
+            p.cantidad,
+            p.minima as cantidad_minima,
+            p.unidad,
+            p.precio_compra,
+            p.ubicacion,
+            p.fecha_entrada,
+            EXTRACT(DAYS FROM (CURRENT_DATE - p.fecha_entrada)) as dias_en_stock,
+            CASE 
+                WHEN p.cantidad <= p.minima THEN 'STOCK BAJO'
+                ELSE 'OK'
+            END as estado_stock,
+            prov.nombre as proveedor_nombre,
+            prov.telefono as proveedor_telefono,
+            prov.email as proveedor_email,
+            prov.contacto as contacto_proveedor
+        FROM productos p
+        LEFT JOIN proveedores prov ON p.proveedor_id = prov.id
+        WHERE p.nombre ILIKE $1 OR p.codigo ILIKE $1
+        ORDER BY p.codigo ASC
     `;
     const result = await query(queryText, [`%${searchTerm}%`]);
     return result.rows;
 }
 
 async function filterProductsByArea(area) {
-    const queryText = 'SELECT * FROM vista_productos_completa WHERE area = $1 ORDER BY codigo ASC';
+    const queryText = `
+        SELECT 
+            p.codigo,
+            p.nombre,
+            p.area,
+            p.cantidad,
+            p.minima as cantidad_minima,
+            p.unidad,
+            p.precio_compra,
+            p.ubicacion,
+            p.fecha_entrada,
+            EXTRACT(DAYS FROM (CURRENT_DATE - p.fecha_entrada)) as dias_en_stock,
+            CASE 
+                WHEN p.cantidad <= p.minima THEN 'STOCK BAJO'
+                ELSE 'OK'
+            END as estado_stock,
+            prov.nombre as proveedor_nombre,
+            prov.telefono as proveedor_telefono,
+            prov.email as proveedor_email,
+            prov.contacto as contacto_proveedor
+        FROM productos p
+        LEFT JOIN proveedores prov ON p.proveedor_id = prov.id
+        WHERE p.area = $1
+        ORDER BY p.codigo ASC
+    `;
     const result = await query(queryText, [area]);
     return result.rows;
 }
