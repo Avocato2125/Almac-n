@@ -5,7 +5,7 @@ const { Pool } = require('pg');
 
 // Configuración de conexión a PostgreSQL Railway
 const dbConfig = {
-    connectionString: process.env.DATABASE_URL || 'postgresql://postgres:VsSTUIDZQfFqDBwBshBjZcjqxoPRPoTF@postgres.railway.internal:5432/railway',
+    connectionString: process.env.DATABASE_URL || 'postgresql://postgres:VsSTUIDZQfFqDBwBshBjZcjqxoPRPoTF@containers-us-west-146.railway.app:5432/railway',
     ssl: { rejectUnauthorized: false }, // Railway requiere SSL
     max: 20, // Máximo número de conexiones en el pool
     idleTimeoutMillis: 30000, // Tiempo de espera antes de cerrar conexiones inactivas
