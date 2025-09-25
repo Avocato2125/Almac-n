@@ -558,6 +558,24 @@ function updateProviderSelect() {
 }
 
 /**
+ * Actualiza la información del proveedor seleccionado
+ */
+function updateProviderInfo() {
+    const select = document.getElementById('newProveedor');
+    if (!select || !select.value) return;
+    
+    const providerId = parseInt(select.value);
+    const proveedor = proveedores.find(p => p.id === providerId);
+    
+    if (proveedor) {
+        // Mostrar información del proveedor seleccionado
+        console.log('Proveedor seleccionado:', proveedor);
+        // Podrías agregar aquí lógica para mostrar información adicional
+        // Por ejemplo, en un tooltip o área de información
+    }
+}
+
+/**
  * Obtiene los filtros actuales del formulario
  */
 function getCurrentFilters() {
@@ -750,6 +768,55 @@ function showSummary() {
             summaryModal.remove();
         }
     });
+}
+
+/**
+ * Ordena la tabla por la columna especificada
+ */
+function sortTable(columnIndex) {
+    const table = document.getElementById('inventoryTable');
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    
+    // Determinar dirección de ordenamiento
+    const currentHeader = table.querySelector(`th:nth-child(${columnIndex + 1})`);
+    const currentSort = currentHeader.getAttribute('data-sort') || 'none';
+    const newSort = currentSort === 'asc' ? 'desc' : 'asc';
+    
+    // Limpiar indicadores de ordenamiento anteriores
+    table.querySelectorAll('th').forEach(th => {
+        th.removeAttribute('data-sort');
+        th.innerHTML = th.innerHTML.replace(/<i class="fas fa-sort-(up|down)"><\/i>/g, '<i class="fas fa-sort"></i>');
+    });
+    
+    // Establecer nuevo ordenamiento
+    currentHeader.setAttribute('data-sort', newSort);
+    const sortIcon = newSort === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
+    currentHeader.innerHTML = currentHeader.innerHTML.replace(/fa-sort/, sortIcon);
+    
+    // Ordenar filas
+    rows.sort((a, b) => {
+        const cellA = a.cells[columnIndex].textContent.trim();
+        const cellB = b.cells[columnIndex].textContent.trim();
+        
+        // Detectar si es número
+        const numA = parseFloat(cellA.replace(/[^0-9.-]/g, ''));
+        const numB = parseFloat(cellB.replace(/[^0-9.-]/g, ''));
+        
+        let comparison;
+        if (!isNaN(numA) && !isNaN(numB)) {
+            // Comparación numérica
+            comparison = numA - numB;
+        } else {
+            // Comparación alfabética
+            comparison = cellA.localeCompare(cellB, 'es', { numeric: true });
+        }
+        
+        return newSort === 'asc' ? comparison : -comparison;
+    });
+    
+    // Aplicar el ordenamiento
+    rows.forEach(row => tbody.appendChild(row));
 }
 
 /**
