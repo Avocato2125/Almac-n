@@ -1,4 +1,6 @@
-// Sistema de Inventario - JavaScript con Base de Datos PostgreSQL
+// Sistema de Inventario - JavaScript con Base de Datos PostgreSQL v2.4
+
+console.log('🚀 Sistema de Almacén v2.4 cargado - Cache busting activado');
 
 // Configuración de la API - Rutas relativas para funcionar en cualquier entorno
 const API_BASE_URL = '/api';
