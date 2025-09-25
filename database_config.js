@@ -188,8 +188,19 @@ async function updateProduct(codigo, updateData) {
         RETURNING *
     `;
     
-    const result = await query(queryText, values);
-    return result.rows[0];
+    try {
+        const result = await query(queryText, values);
+        return result.rows[0];
+    } catch (error) {
+        console.error('Error en updateProduct:', {
+            codigo,
+            updateData,
+            queryText,
+            values,
+            error: error.message
+        });
+        throw error;
+    }
 }
 
 async function deleteProduct(codigo) {

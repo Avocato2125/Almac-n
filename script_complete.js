@@ -1359,6 +1359,7 @@ function editItem(codigo) {
     document.getElementById('editProductMinima').value = item.cantidad_minima || item.cantidadMinima || 2;
     document.getElementById('editProductPrecio').value = formatDisplayCurrency(item.precio_compra || item.precio || 0);
     document.getElementById('editProductUbicacion').value = item.ubicacion || '';
+    document.getElementById('editProductFactor').value = item.factor_conversion || 1;
     
     // Mostrar el modal
     const modal = document.getElementById('editProductModal');
@@ -1393,6 +1394,7 @@ async function saveEditProduct() {
     const minima = parseInt(document.getElementById('editProductMinima').value);
     const precioStr = document.getElementById('editProductPrecio').value;
     const ubicacion = document.getElementById('editProductUbicacion').value.trim();
+    const factorConversion = parseInt(document.getElementById('editProductFactor').value);
     
     // Validaciones
     if (!nombre) {
@@ -1413,6 +1415,12 @@ async function saveEditProduct() {
         return;
     }
     
+    if (isNaN(factorConversion) || factorConversion < 1) {
+        alert('Por favor ingresa un factor de conversión válido');
+        document.getElementById('editProductFactor').focus();
+        return;
+    }
+    
     // Validar y formatear precio
     const precio = validateCurrency(precioStr);
     if (precio === null) {
@@ -1428,7 +1436,8 @@ async function saveEditProduct() {
             cantidad: cantidad,
             cantidad_minima: minima,
             precio_compra: precio,
-            ubicacion: ubicacion
+            ubicacion: ubicacion,
+            factor_conversion: factorConversion
         };
         
         // Actualizar en la base de datos

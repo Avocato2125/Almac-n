@@ -372,6 +372,22 @@
                             <input type="text" id="editProductUbicacion" placeholder="Ubicación en almacén">
                         </td>
                     </tr>
+                    <tr>
+                        <td style="border: none; padding: 5px; vertical-align: top;">
+                            <div class="field-label">
+                                <i class="fas fa-cube"></i> Factor de Conversión:
+                            </div>
+                            <input type="number" id="editProductFactor" placeholder="1" min="1" value="1">
+                        </td>
+                        <td style="border: none; padding: 5px; vertical-align: top;">
+                            <div class="field-label">
+                                <i class="fas fa-info-circle"></i> Descripción:
+                            </div>
+                            <small style="color: #6c757d; font-size: 11px;">
+                                Número de piezas por unidad (ej: 1 caja = 100 pz)
+                            </small>
+                        </td>
+                    </tr>
                 </table>
                 <div class="modal-actions">
                     <button class="btn" onclick="saveEditProduct()" style="background: #4CAF50; color: white; margin-right: 10px;">
@@ -454,7 +470,7 @@
     </div>
 
     <!-- Scripts -->
-    <script src="script_complete.js?v=1.9"></script>
+    <script src="script_complete.js?v=2.0"></script>
     
     <!-- Estilos adicionales para animaciones -->
     <style>
