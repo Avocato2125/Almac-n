@@ -508,6 +508,7 @@ async function addProvider() {
     const telefono = document.getElementById('providerTelefono')?.value?.trim();
     const email = document.getElementById('providerEmail')?.value?.trim();
     const contacto = document.getElementById('providerContacto')?.value?.trim();
+    const direccion = document.getElementById('providerDireccion')?.value?.trim();
     
     if (!nombre) {
         alert('Por favor ingresa el nombre del proveedor');
@@ -520,7 +521,8 @@ async function addProvider() {
             rfc: rfc,
             telefono: telefono,
             email: email,
-            contacto: contacto
+            contacto: contacto,
+            direccion: direccion
         };
         
         // 1. Envía el nuevo proveedor a la base de datos
@@ -1197,7 +1199,7 @@ function exportOutputsData() {
  * Limpia el formulario de proveedores
  */
 function clearProviderForm() {
-    const formFields = ['providerNombre', 'providerRFC', 'providerTelefono', 'providerEmail', 'providerContacto'];
+    const formFields = ['providerNombre', 'providerRFC', 'providerTelefono', 'providerEmail', 'providerContacto', 'providerDireccion'];
     formFields.forEach(fieldId => {
         const field = document.getElementById(fieldId);
         if (field) {
@@ -1236,6 +1238,7 @@ function renderProvidersTable() {
             <td>${proveedor.telefono || '-'}</td>
             <td>${proveedor.email || '-'}</td>
             <td>${proveedor.contacto || '-'}</td>
+            <td>${proveedor.direccion || '-'}</td>
             <td>
                 <button class="btn" onclick="editProvider(${proveedor.id})" style="background: #2196F3; color: white; padding: 3px 8px; margin-right: 5px;">
                     <i class="fas fa-edit"></i>
@@ -1281,6 +1284,10 @@ function editItem(codigo) {
 
 function editProvider(id) {
     alert('Función de edición de proveedores en desarrollo');
+}
+
+function editOutput(id) {
+    alert('Función de edición de salidas en desarrollo');
 }
 
 // ============================================
