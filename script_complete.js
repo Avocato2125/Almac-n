@@ -1283,6 +1283,35 @@ function editProvider(id) {
     alert('Función de edición de proveedores en desarrollo');
 }
 
+// ============================================
+// EXPOSICIÓN DE FUNCIONES GLOBALES
+// ============================================
+
+// Exponer todas las funciones necesarias al objeto global window
+window.toggleAddForm = toggleAddForm;
+window.addProduct = addProduct;
+window.editItem = editItem;
+window.removeItem = removeItem;
+window.exportData = exportData;
+window.showSummary = showSummary;
+window.sortTable = sortTable;
+window.clearSearch = clearSearch;
+window.updateProviderInfo = updateProviderInfo;
+window.toggleProviderSection = toggleProviderSection;
+window.addProvider = addProvider;
+window.editProvider = editProvider;
+window.removeProvider = removeProvider;
+window.toggleOutputForm = toggleOutputForm;
+window.registerOutput = registerOutput;
+window.toggleOutputsTable = toggleOutputsTable;
+window.exportOutputsData = exportOutputsData;
+window.editOutput = editOutput;
+window.deleteOutput = deleteOutput;
+
+// ============================================
+// INICIALIZACIÓN
+// ============================================
+
 // Inicializar cuando el DOM esté listo
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeApp);
