@@ -1405,7 +1405,7 @@ async function saveEditProduct() {
         closeEditProductModal();
         return;
     }
-    const proveedorId = productoActual.proveedor_id;
+    const proveedorId = productoActual.proveedor_id || null;
     
     // Validaciones
     if (!nombre) {
@@ -1434,7 +1434,7 @@ async function saveEditProduct() {
     
     // Validar y formatear precio
     const precio = validateCurrency(precioStr);
-    if (precio === null) {
+    if (precio === null && precioStr.trim() !== '') {
         alert('Por favor ingresa un precio válido');
         document.getElementById('editProductPrecio').focus();
         return;
@@ -1450,15 +1450,20 @@ async function saveEditProduct() {
             precio_compra: precio,
             ubicacion: ubicacion,
             factor_conversion: factorConversion,
-            proveedor_id: proveedorId
+            proveedor_id: proveedorId ? parseInt(proveedorId) : null
         };
         
         // Log para debugging
         console.log('saveEditProduct - Enviando datos:', {
             currentEditingProductCode,
-            updateData,
+            updateData: {
+                ...updateData,
+                proveedor_id_type: typeof updateData.proveedor_id,
+                proveedor_id_value: updateData.proveedor_id
+            },
             proveedorId,
-            productoActual: productoActual ? productoActual.proveedor_id : null
+            productoActual_proveedor_id: productoActual.proveedor_id,
+            productoActual_proveedor_id_type: typeof productoActual.proveedor_id
         });
 
         // Actualizar en la base de datos
