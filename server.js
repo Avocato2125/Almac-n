@@ -120,26 +120,42 @@ app.put('/api/productos/:codigo', async (req, res) => {
     try {
         const { codigo } = req.params;
         const updateData = req.body;
-        
+
+        console.log('PUT /api/productos/:codigo - Datos recibidos:', {
+            codigo,
+            updateData,
+            timestamp: new Date().toISOString()
+        });
+
         const productoActualizado = await db.updateProduct(codigo, updateData);
-        
+
         if (!productoActualizado) {
+            console.log('PUT /api/productos/:codigo - Producto no encontrado:', codigo);
             return res.status(404).json({
                 success: false,
                 error: 'Producto no encontrado'
             });
         }
-        
+
+        console.log('PUT /api/productos/:codigo - Producto actualizado exitosamente:', productoActualizado);
+
         res.json({
             success: true,
             data: productoActualizado,
             message: 'Producto actualizado exitosamente'
         });
     } catch (error) {
-        console.error('Error al actualizar producto:', error);
+        console.error('PUT /api/productos/:codigo - Error completo:', {
+            codigo: req.params.codigo,
+            updateData: req.body,
+            error: error.message,
+            stack: error.stack,
+            timestamp: new Date().toISOString()
+        });
         res.status(500).json({
             success: false,
-            error: 'Error interno del servidor'
+            error: 'Error interno del servidor',
+            details: error.message
         });
     }
 });

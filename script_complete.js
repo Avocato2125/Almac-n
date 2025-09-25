@@ -1395,6 +1395,10 @@ async function saveEditProduct() {
     const precioStr = document.getElementById('editProductPrecio').value;
     const ubicacion = document.getElementById('editProductUbicacion').value.trim();
     const factorConversion = parseInt(document.getElementById('editProductFactor').value);
+
+    // Obtener el producto actual para preservar el proveedor_id
+    const productoActual = inventario.find(p => p.codigo === currentEditingProductCode);
+    const proveedorId = productoActual ? productoActual.proveedor_id : null;
     
     // Validaciones
     if (!nombre) {
@@ -1437,9 +1441,18 @@ async function saveEditProduct() {
             cantidad_minima: minima,
             precio_compra: precio,
             ubicacion: ubicacion,
-            factor_conversion: factorConversion
+            factor_conversion: factorConversion,
+            proveedor_id: proveedorId
         };
         
+        // Log para debugging
+        console.log('saveEditProduct - Enviando datos:', {
+            currentEditingProductCode,
+            updateData,
+            proveedorId,
+            productoActual: productoActual ? productoActual.proveedor_id : null
+        });
+
         // Actualizar en la base de datos
         const response = await fetch(`${API_BASE_URL}/productos/${currentEditingProductCode}`, {
             method: 'PUT',
@@ -1448,8 +1461,15 @@ async function saveEditProduct() {
             },
             body: JSON.stringify(updateData)
         });
-        
+
         const result = await response.json();
+
+        console.log('saveEditProduct - Respuesta del servidor:', {
+            success: result.success,
+            error: result.error,
+            status: response.status
+        });
+
         if (result.success) {
             // Actualización local optimista
             const itemIndex = inventario.findIndex(p => p.codigo === currentEditingProductCode);
@@ -1458,7 +1478,7 @@ async function saveEditProduct() {
                 renderTable();
                 updateStats();
             }
-            
+
             // Cerrar modal y mostrar mensaje de éxito
             closeEditProductModal();
             alert('✅ Producto actualizado exitosamente');

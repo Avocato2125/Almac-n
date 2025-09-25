@@ -162,16 +162,19 @@ async function createProduct(productData) {
 }
 
 async function updateProduct(codigo, updateData) {
+    console.log('updateProduct - Iniciando:', { codigo, updateData });
+
     const fields = [];
     const values = [];
     let paramCount = 1;
-    
+
     // Mapear cantidad_minima a minima para coincidir con el esquema
     if (updateData.cantidad_minima !== undefined) {
         updateData.minima = updateData.cantidad_minima;
         delete updateData.cantidad_minima;
+        console.log('updateProduct - Mapeado cantidad_minima a minima:', updateData);
     }
-    
+
     Object.keys(updateData).forEach(key => {
         if (updateData[key] !== undefined) {
             fields.push(`${key} = $${paramCount}`);
@@ -179,25 +182,56 @@ async function updateProduct(codigo, updateData) {
             paramCount++;
         }
     });
-    
+
     values.push(codigo);
+
     const queryText = `
-        UPDATE productos 
+        UPDATE productos
         SET ${fields.join(', ')}
         WHERE codigo = $${paramCount}
         RETURNING *
     `;
-    
+
+    console.log('updateProduct - Query preparada:', {
+        queryText,
+        values: values.map((val, i) => `${i + 1}: ${val} (${typeof val})`),
+        paramCount,
+        fieldsCount: fields.length
+    });
+
     try {
         const result = await query(queryText, values);
+        console.log('updateProduct - Resultado exitoso:', {
+            rowCount: result.rowCount,
+            hasRows: result.rows.length > 0
+        });
         return result.rows[0];
     } catch (error) {
-        console.error('Error en updateProduct:', {
+        console.error('updateProduct - Error completo:', {
             codigo,
             updateData,
             queryText,
-            values,
-            error: error.message
+            values: values.map((val, i) => ({ position: i + 1, value: val, type: typeof val })),
+            fields,
+            paramCount,
+            error: error.message,
+            code: error.code,
+            severity: error.severity,
+            detail: error.detail,
+            hint: error.hint,
+            position: error.position,
+            internalPosition: error.internalPosition,
+            internalQuery: error.internalQuery,
+            where: error.where,
+            schema: error.schema,
+            table: error.table,
+            column: error.column,
+            dataType: error.dataType,
+            constraint: error.constraint,
+            file: error.file,
+            line: error.line,
+            routine: error.routine,
+            stack: error.stack
         });
         throw error;
     }
