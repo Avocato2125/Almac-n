@@ -375,17 +375,22 @@
                     <tr>
                         <td style="border: none; padding: 5px; vertical-align: top;">
                             <div class="field-label">
-                                <i class="fas fa-cube"></i> Factor de Conversión:
+                                <i class="fas fa-cube"></i> Unidad:
                             </div>
-                            <input type="number" id="editProductFactor" placeholder="1" min="1" value="1">
+                            <select id="editProductUnidad">
+                                <option value="PZ">PZ</option>
+                                <option value="CAJA">CAJA</option>
+                                <option value="PAQUETE">PAQUETE</option>
+                                <option value="KG">KG</option>
+                                <option value="LT">LT</option>
+                                <option value="MT">MT</option>
+                            </select>
                         </td>
                         <td style="border: none; padding: 5px; vertical-align: top;">
                             <div class="field-label">
-                                <i class="fas fa-info-circle"></i> Descripción:
+                                <i class="fas fa-cube"></i> Factor de Conversión:
                             </div>
-                            <small style="color: #6c757d; font-size: 11px;">
-                                Número de piezas por unidad (ej: 1 caja = 100 pz)
-                            </small>
+                            <input type="number" id="editProductFactor" placeholder="1" min="1" value="1">
                         </td>
                     </tr>
                 </table>
@@ -470,7 +475,7 @@
     </div>
 
     <!-- Scripts -->
-    <script src="script_complete.js?v=2.1"></script>
+    <script src="script_complete.js?v=2.2"></script>
     
     <!-- Estilos adicionales para animaciones -->
     <style>

@@ -1359,6 +1359,7 @@ function editItem(codigo) {
     document.getElementById('editProductMinima').value = item.cantidad_minima || item.cantidadMinima || 2;
     document.getElementById('editProductPrecio').value = formatDisplayCurrency(item.precio_compra || item.precio || 0);
     document.getElementById('editProductUbicacion').value = item.ubicacion || '';
+    document.getElementById('editProductUnidad').value = item.unidad || 'PZ';
     document.getElementById('editProductFactor').value = item.factor_conversion || 1;
     
     // Mostrar el modal
@@ -1394,11 +1395,17 @@ async function saveEditProduct() {
     const minima = parseInt(document.getElementById('editProductMinima').value);
     const precioStr = document.getElementById('editProductPrecio').value;
     const ubicacion = document.getElementById('editProductUbicacion').value.trim();
+    const unidad = document.getElementById('editProductUnidad').value;
     const factorConversion = parseInt(document.getElementById('editProductFactor').value);
 
     // Obtener el producto actual para preservar el proveedor_id
     const productoActual = inventario.find(p => p.codigo === currentEditingProductCode);
-    const proveedorId = productoActual ? productoActual.proveedor_id : null;
+    if (!productoActual) {
+        alert('Error: Producto no encontrado en el inventario');
+        closeEditProductModal();
+        return;
+    }
+    const proveedorId = productoActual.proveedor_id;
     
     // Validaciones
     if (!nombre) {
@@ -1439,6 +1446,7 @@ async function saveEditProduct() {
             area: area,
             cantidad: cantidad,
             cantidad_minima: minima,
+            unidad: unidad,
             precio_compra: precio,
             ubicacion: ubicacion,
             factor_conversion: factorConversion,
@@ -1467,6 +1475,7 @@ async function saveEditProduct() {
         console.log('saveEditProduct - Respuesta del servidor:', {
             success: result.success,
             error: result.error,
+            details: result.details,
             status: response.status
         });
 
@@ -1483,7 +1492,8 @@ async function saveEditProduct() {
             closeEditProductModal();
             alert('✅ Producto actualizado exitosamente');
         } else {
-            throw new Error(result.error || 'Error al actualizar producto');
+            const errorMessage = result.details || result.error || 'Error al actualizar producto';
+            throw new Error(errorMessage);
         }
     } catch (error) {
         console.error('Error al actualizar producto:', error);
