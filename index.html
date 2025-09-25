@@ -316,12 +316,145 @@
     </div>
 
     <!-- Información de atajos de teclado -->
+    <!-- Modal para editar productos -->
+    <div class="modal hidden" id="editProductModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit"></i> Editar Producto</h3>
+                <button class="modal-close" onclick="closeEditProductModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <table style="width: 100%; margin-bottom: 15px;">
+                    <tr>
+                        <td style="border: none; padding: 5px; vertical-align: top;">
+                            <div class="field-label">
+                                <i class="fas fa-tag"></i> Nombre:
+                            </div>
+                            <input type="text" id="editProductNombre" placeholder="Nombre del producto" required>
+                        </td>
+                        <td style="border: none; padding: 5px; vertical-align: top;">
+                            <div class="field-label">
+                                <i class="fas fa-building"></i> Área:
+                            </div>
+                            <select id="editProductArea">
+                                <option value="OFICINA">OFICINA</option>
+                                <option value="LIMPIEZA">LIMPIEZA</option>
+                                <option value="TALLER">TALLER</option>
+                                <option value="ENFERMERIA">ENFERMERIA</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="border: none; padding: 5px; vertical-align: top;">
+                            <div class="field-label">
+                                <i class="fas fa-boxes"></i> Cantidad:
+                            </div>
+                            <input type="number" id="editProductCantidad" placeholder="Cantidad" required min="0">
+                        </td>
+                        <td style="border: none; padding: 5px; vertical-align: top;">
+                            <div class="field-label">
+                                <i class="fas fa-exclamation-triangle"></i> Cantidad Mínima:
+                            </div>
+                            <input type="number" id="editProductMinima" placeholder="Cantidad mínima" required min="1">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="border: none; padding: 5px; vertical-align: top;">
+                            <div class="field-label">
+                                <i class="fas fa-dollar-sign"></i> Precio de Compra:
+                            </div>
+                            <input type="text" id="editProductPrecio" placeholder="$0.00" class="currency-input">
+                        </td>
+                        <td style="border: none; padding: 5px; vertical-align: top;">
+                            <div class="field-label">
+                                <i class="fas fa-map-marker-alt"></i> Ubicación:
+                            </div>
+                            <input type="text" id="editProductUbicacion" placeholder="Ubicación en almacén">
+                        </td>
+                    </tr>
+                </table>
+                <div class="modal-actions">
+                    <button class="btn" onclick="saveEditProduct()" style="background: #4CAF50; color: white; margin-right: 10px;">
+                        <i class="fas fa-save"></i> Guardar Cambios
+                    </button>
+                    <button class="btn" onclick="closeEditProductModal()" style="background: #6c757d; color: white;">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para editar proveedores -->
+    <div class="modal hidden" id="editProviderModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit"></i> Editar Proveedor</h3>
+                <button class="modal-close" onclick="closeEditProviderModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <table style="width: 100%; margin-bottom: 15px;">
+                    <tr>
+                        <td style="border: none; padding: 5px; vertical-align: top;">
+                            <div class="field-label">
+                                <i class="fas fa-building"></i> Nombre:
+                            </div>
+                            <input type="text" id="editProviderNombre" placeholder="Nombre de la empresa" required>
+                        </td>
+                        <td style="border: none; padding: 5px; vertical-align: top;">
+                            <div class="field-label">
+                                <i class="fas fa-id-card"></i> RFC:
+                            </div>
+                            <input type="text" id="editProviderRFC" placeholder="RFC de la empresa">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="border: none; padding: 5px; vertical-align: top;">
+                            <div class="field-label">
+                                <i class="fas fa-phone"></i> Teléfono:
+                            </div>
+                            <input type="text" id="editProviderTelefono" placeholder="Teléfono de contacto">
+                        </td>
+                        <td style="border: none; padding: 5px; vertical-align: top;">
+                            <div class="field-label">
+                                <i class="fas fa-envelope"></i> Email:
+                            </div>
+                            <input type="email" id="editProviderEmail" placeholder="correo@empresa.com">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="border: none; padding: 5px; vertical-align: top;">
+                            <div class="field-label">
+                                <i class="fas fa-user"></i> Contacto:
+                            </div>
+                            <input type="text" id="editProviderContacto" placeholder="Nombre del contacto">
+                        </td>
+                        <td style="border: none; padding: 5px; vertical-align: top;">
+                            <div class="field-label">
+                                <i class="fas fa-map-marker-alt"></i> Dirección:
+                            </div>
+                            <input type="text" id="editProviderDireccion" placeholder="Dirección completa">
+                        </td>
+                    </tr>
+                </table>
+                <div class="modal-actions">
+                    <button class="btn" onclick="saveEditProvider()" style="background: #4CAF50; color: white; margin-right: 10px;">
+                        <i class="fas fa-save"></i> Guardar Cambios
+                    </button>
+                    <button class="btn" onclick="closeEditProviderModal()" style="background: #6c757d; color: white;">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div style="position: fixed; bottom: 10px; left: 10px; background: rgba(0,0,0,0.7); color: white; padding: 5px 10px; border-radius: 3px; font-size: 11px; z-index: 1000;">
         <strong>Atajos:</strong> Ctrl+F (Buscar) | Ctrl+N (Agregar) | Ctrl+S (Exportar) | Esc (Limpiar/Cerrar)
     </div>
 
     <!-- Scripts -->
-    <script src="script_complete.js?v=1.8"></script>
+    <script src="script_complete.js?v=1.9"></script>
     
     <!-- Estilos adicionales para animaciones -->
     <style>

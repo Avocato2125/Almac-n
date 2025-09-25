@@ -933,6 +933,19 @@ function setupEventListeners() {
             const addForm = document.getElementById('addForm');
             const summaryBox = document.getElementById('summaryBox');
             const providerSection = document.getElementById('providerSection');
+            const editProductModal = document.getElementById('editProductModal');
+            const editProviderModal = document.getElementById('editProviderModal');
+            
+            // Cerrar modales de edición primero (tienen mayor prioridad)
+            if (editProductModal && !editProductModal.classList.contains('hidden')) {
+                closeEditProductModal();
+                return;
+            }
+            
+            if (editProviderModal && !editProviderModal.classList.contains('hidden')) {
+                closeEditProviderModal();
+                return;
+            }
             
             // Si hay texto en la búsqueda, limpiarlo
             if (searchBox && searchBox.value.trim()) {
@@ -1326,116 +1339,236 @@ async function removeProvider(id) {
 }
 
 // Funciones placeholder para compatibilidad
-async function editItem(codigo) {
+// Variable global para almacenar el código del producto que se está editando
+let currentEditingProductCode = null;
+
+function editItem(codigo) {
     const item = inventario.find(p => p.codigo === codigo);
     if (!item) {
         alert('Producto no encontrado');
         return;
     }
     
-    const nuevoNombre = prompt('Nombre del producto:', item.nombre);
-    if (nuevoNombre === null) return; // Usuario canceló
+    // Guardar el código del producto que se está editando
+    currentEditingProductCode = codigo;
     
-    const nuevaCantidad = prompt('Cantidad:', item.cantidad);
-    if (nuevaCantidad === null) return; // Usuario canceló
+    // Llenar los campos del modal con los datos actuales
+    document.getElementById('editProductNombre').value = item.nombre || '';
+    document.getElementById('editProductArea').value = item.area || 'OFICINA';
+    document.getElementById('editProductCantidad').value = item.cantidad || 0;
+    document.getElementById('editProductMinima').value = item.cantidad_minima || item.cantidadMinima || 2;
+    document.getElementById('editProductPrecio').value = formatDisplayCurrency(item.precio_compra || item.precio || 0);
+    document.getElementById('editProductUbicacion').value = item.ubicacion || '';
     
-    const cantidadNum = parseInt(nuevaCantidad);
-    if (isNaN(cantidadNum) || cantidadNum < 0) {
-        alert('Por favor ingresa una cantidad válida');
+    // Mostrar el modal
+    const modal = document.getElementById('editProductModal');
+    modal.classList.remove('hidden');
+    
+    // Configurar el campo de precio para formato de moneda
+    const precioInput = document.getElementById('editProductPrecio');
+    precioInput.addEventListener('input', function() {
+        formatCurrency(this);
+    });
+    
+    // Enfocar el primer campo
+    document.getElementById('editProductNombre').focus();
+}
+
+function closeEditProductModal() {
+    const modal = document.getElementById('editProductModal');
+    modal.classList.add('hidden');
+    currentEditingProductCode = null;
+}
+
+async function saveEditProduct() {
+    if (!currentEditingProductCode) {
+        alert('Error: No hay producto seleccionado para editar');
         return;
     }
     
-    if (confirm(`¿Confirmar cambios?\nNombre: ${nuevoNombre}\nCantidad: ${cantidadNum}`)) {
-        try {
-            const updateData = {
-                nombre: nuevoNombre.trim(),
-                cantidad: cantidadNum
-            };
-            
-            // Actualizar en la base de datos
-            const response = await fetch(`${API_BASE_URL}/productos/${codigo}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(updateData)
-            });
-            
-            const result = await response.json();
-            if (result.success) {
-                // Actualización local optimista
-                const itemIndex = inventario.findIndex(p => p.codigo === codigo);
-                if (itemIndex !== -1) {
-                    inventario[itemIndex] = { ...inventario[itemIndex], ...updateData };
-                    renderTable();
-                    updateStats();
-                }
-                alert('✅ Producto actualizado exitosamente');
-            } else {
-                throw new Error(result.error || 'Error al actualizar producto');
+    // Obtener valores del formulario
+    const nombre = document.getElementById('editProductNombre').value.trim();
+    const area = document.getElementById('editProductArea').value;
+    const cantidad = parseInt(document.getElementById('editProductCantidad').value);
+    const minima = parseInt(document.getElementById('editProductMinima').value);
+    const precioStr = document.getElementById('editProductPrecio').value;
+    const ubicacion = document.getElementById('editProductUbicacion').value.trim();
+    
+    // Validaciones
+    if (!nombre) {
+        alert('Por favor ingresa el nombre del producto');
+        document.getElementById('editProductNombre').focus();
+        return;
+    }
+    
+    if (isNaN(cantidad) || cantidad < 0) {
+        alert('Por favor ingresa una cantidad válida');
+        document.getElementById('editProductCantidad').focus();
+        return;
+    }
+    
+    if (isNaN(minima) || minima < 1) {
+        alert('Por favor ingresa una cantidad mínima válida');
+        document.getElementById('editProductMinima').focus();
+        return;
+    }
+    
+    // Validar y formatear precio
+    const precio = validateCurrency(precioStr);
+    if (precio === null) {
+        alert('Por favor ingresa un precio válido');
+        document.getElementById('editProductPrecio').focus();
+        return;
+    }
+    
+    try {
+        const updateData = {
+            nombre: nombre,
+            area: area,
+            cantidad: cantidad,
+            cantidad_minima: minima,
+            precio_compra: precio,
+            ubicacion: ubicacion
+        };
+        
+        // Actualizar en la base de datos
+        const response = await fetch(`${API_BASE_URL}/productos/${currentEditingProductCode}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updateData)
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            // Actualización local optimista
+            const itemIndex = inventario.findIndex(p => p.codigo === currentEditingProductCode);
+            if (itemIndex !== -1) {
+                inventario[itemIndex] = { ...inventario[itemIndex], ...updateData };
+                renderTable();
+                updateStats();
             }
-        } catch (error) {
-            console.error('Error al actualizar producto:', error);
-            alert('❌ Error al actualizar producto: ' + error.message);
+            
+            // Cerrar modal y mostrar mensaje de éxito
+            closeEditProductModal();
+            alert('✅ Producto actualizado exitosamente');
+        } else {
+            throw new Error(result.error || 'Error al actualizar producto');
         }
+    } catch (error) {
+        console.error('Error al actualizar producto:', error);
+        alert('❌ Error al actualizar producto: ' + error.message);
     }
 }
 
-async function editProvider(id) {
+// Variable global para almacenar el ID del proveedor que se está editando
+let currentEditingProviderId = null;
+
+function editProvider(id) {
     const proveedor = proveedores.find(p => p.id === id);
     if (!proveedor) {
         alert('Proveedor no encontrado');
         return;
     }
     
-    const nuevoNombre = prompt('Nombre del proveedor:', proveedor.nombre);
-    if (nuevoNombre === null) return; // Usuario canceló
+    // Guardar el ID del proveedor que se está editando
+    currentEditingProviderId = id;
     
-    const nuevoTelefono = prompt('Teléfono:', proveedor.telefono);
-    if (nuevoTelefono === null) return; // Usuario canceló
+    // Llenar los campos del modal con los datos actuales
+    document.getElementById('editProviderNombre').value = proveedor.nombre || '';
+    document.getElementById('editProviderRFC').value = proveedor.rfc || '';
+    document.getElementById('editProviderTelefono').value = proveedor.telefono || '';
+    document.getElementById('editProviderEmail').value = proveedor.email || '';
+    document.getElementById('editProviderContacto').value = proveedor.contacto || '';
+    document.getElementById('editProviderDireccion').value = proveedor.direccion || '';
     
-    const nuevoEmail = prompt('Email:', proveedor.email);
-    if (nuevoEmail === null) return; // Usuario canceló
+    // Mostrar el modal
+    const modal = document.getElementById('editProviderModal');
+    modal.classList.remove('hidden');
     
-    const nuevaDireccion = prompt('Dirección:', proveedor.direccion || '');
-    if (nuevaDireccion === null) return; // Usuario canceló
-    
-    if (confirm(`¿Confirmar cambios?\nNombre: ${nuevoNombre}\nTeléfono: ${nuevoTelefono}\nEmail: ${nuevoEmail}\nDirección: ${nuevaDireccion}`)) {
-        try {
-            const updateData = {
-                nombre: nuevoNombre.trim(),
-                telefono: nuevoTelefono.trim(),
-                email: nuevoEmail.trim(),
-                direccion: nuevaDireccion.trim()
-            };
-            
-            // Actualizar en la base de datos
-            const response = await fetch(`${API_BASE_URL}/proveedores/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(updateData)
-            });
-            
-            const result = await response.json();
-            if (result.success) {
-                // Actualización local optimista
-                const proveedorIndex = proveedores.findIndex(p => p.id === id);
-                if (proveedorIndex !== -1) {
-                    proveedores[proveedorIndex] = { ...proveedores[proveedorIndex], ...updateData };
-                    renderProvidersTable();
-                    updateProviderSelect();
-                }
-                alert('✅ Proveedor actualizado exitosamente');
-            } else {
-                throw new Error(result.error || 'Error al actualizar proveedor');
-            }
-        } catch (error) {
-            console.error('Error al actualizar proveedor:', error);
-            alert('❌ Error al actualizar proveedor: ' + error.message);
-        }
+    // Enfocar el primer campo
+    document.getElementById('editProviderNombre').focus();
+}
+
+function closeEditProviderModal() {
+    const modal = document.getElementById('editProviderModal');
+    modal.classList.add('hidden');
+    currentEditingProviderId = null;
+}
+
+async function saveEditProvider() {
+    if (!currentEditingProviderId) {
+        alert('Error: No hay proveedor seleccionado para editar');
+        return;
     }
+    
+    // Obtener valores del formulario
+    const nombre = document.getElementById('editProviderNombre').value.trim();
+    const rfc = document.getElementById('editProviderRFC').value.trim();
+    const telefono = document.getElementById('editProviderTelefono').value.trim();
+    const email = document.getElementById('editProviderEmail').value.trim();
+    const contacto = document.getElementById('editProviderContacto').value.trim();
+    const direccion = document.getElementById('editProviderDireccion').value.trim();
+    
+    // Validaciones
+    if (!nombre) {
+        alert('Por favor ingresa el nombre del proveedor');
+        document.getElementById('editProviderNombre').focus();
+        return;
+    }
+    
+    if (email && !isValidEmail(email)) {
+        alert('Por favor ingresa un email válido');
+        document.getElementById('editProviderEmail').focus();
+        return;
+    }
+    
+    try {
+        const updateData = {
+            nombre: nombre,
+            rfc: rfc,
+            telefono: telefono,
+            email: email,
+            contacto: contacto,
+            direccion: direccion
+        };
+        
+        // Actualizar en la base de datos
+        const response = await fetch(`${API_BASE_URL}/proveedores/${currentEditingProviderId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updateData)
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            // Actualización local optimista
+            const proveedorIndex = proveedores.findIndex(p => p.id === currentEditingProviderId);
+            if (proveedorIndex !== -1) {
+                proveedores[proveedorIndex] = { ...proveedores[proveedorIndex], ...updateData };
+                renderProvidersTable();
+                updateProviderSelect();
+            }
+            
+            // Cerrar modal y mostrar mensaje de éxito
+            closeEditProviderModal();
+            alert('✅ Proveedor actualizado exitosamente');
+        } else {
+            throw new Error(result.error || 'Error al actualizar proveedor');
+        }
+    } catch (error) {
+        console.error('Error al actualizar proveedor:', error);
+        alert('❌ Error al actualizar proveedor: ' + error.message);
+    }
+}
+
+// Función auxiliar para validar email
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
 }
 
 function editOutput(id) {
@@ -1486,6 +1619,10 @@ window.exportOutputsData = exportOutputsData;
 window.editOutput = editOutput;
 window.deleteOutput = deleteOutput;
 window.toggleConversionField = toggleConversionField;
+window.closeEditProductModal = closeEditProductModal;
+window.saveEditProduct = saveEditProduct;
+window.closeEditProviderModal = closeEditProviderModal;
+window.saveEditProvider = saveEditProvider;
 
 // ============================================
 // INICIALIZACIÓN
