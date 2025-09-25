@@ -81,7 +81,18 @@
                         <div class="field-label">
                             <i class="fas fa-ruler"></i> Unidad:
                         </div>
-                        <input type="text" id="newUnidad" placeholder="PZ, CAJAS, etc." value="PZ">
+                        <select id="newUnidad" onchange="toggleConversionField()">
+                            <option value="PZ">PZ (Piezas)</option>
+                            <option value="CAJA">CAJA</option>
+                            <option value="PAQUETE">PAQUETE</option>
+                            <option value="KG">KG</option>
+                            <option value="LT">LT (Litros)</option>
+                            <option value="MT">MT (Metros)</option>
+                        </select>
+                        <div id="conversionField" style="margin-top: 5px; display: none;">
+                            <input type="number" id="newFactorConversion" placeholder="Piezas por unidad" min="1" style="width: 100%; font-size: 11px; padding: 3px;">
+                            <small style="color: #666; font-size: 9px;">Ej: Si es CAJA, ¿cuántas piezas contiene?</small>
+                        </div>
                     </td>
                     <td style="border: none; padding: 5px; vertical-align: top;">
                         <div class="field-label">
@@ -310,7 +321,7 @@
     </div>
 
     <!-- Scripts -->
-    <script src="script_complete.js?v=1.5"></script>
+    <script src="script_complete.js?v=1.6"></script>
     
     <!-- Estilos adicionales para animaciones -->
     <style>

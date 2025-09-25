@@ -335,7 +335,7 @@ function renderTable() {
             <td style="text-align: center; font-weight: bold; color: ${isLowStock ? '#f44336' : '#4CAF50'};">
                 <i class="fas fa-${isLowStock ? 'exclamation-triangle' : 'check-circle'}"></i> ${cantidadMinima}
             </td>
-            <td>${item.unidad}</td>
+            <td>${item.unidad}${item.factor_conversion && item.factor_conversion > 1 ? ` (${item.factor_conversion} pz)` : ''}</td>
             <td class="price-cell">${formatDisplayCurrency(item.precio_compra || item.precio)}</td>
             <td>${item.ubicacion}</td>
             <td>${item.proveedor_nombre || item.proveedor}</td>
@@ -393,11 +393,18 @@ async function addProduct() {
     const cantidad = parseInt(document.getElementById('newCantidad')?.value) || 0;
     const cantidadMinima = parseInt(document.getElementById('newCantidadMinima')?.value) || 2;
     const unidad = document.getElementById('newUnidad')?.value?.trim();
+    const factorConversion = document.getElementById('newFactorConversion')?.value;
     const precio = document.getElementById('newPrecio')?.value?.trim();
     const proveedorId = document.getElementById('newProveedor')?.value;
     
     if (!nombre) {
         alert('Por favor ingresa el nombre del producto');
+        return;
+    }
+    
+    // Validar factor de conversión para CAJA y PAQUETE
+    if ((unidad === 'CAJA' || unidad === 'PAQUETE') && (!factorConversion || factorConversion <= 0)) {
+        alert(`Por favor especifica cuántas piezas contiene cada ${unidad.toLowerCase()}`);
         return;
     }
     
@@ -409,6 +416,7 @@ async function addProduct() {
             cantidad: cantidad,
             cantidad_minima: cantidadMinima,
             unidad: unidad || 'PZ',
+            factor_conversion: (unidad === 'CAJA' || unidad === 'PAQUETE') ? parseInt(factorConversion) : 1,
             precio_compra: precio ? parseFloat(precio) : null,
             ubicacion: 'ALMACEN',
             proveedor_id: proveedorId ? parseInt(proveedorId) : null
@@ -1279,7 +1287,22 @@ async function removeProvider(id) {
 
 // Funciones placeholder para compatibilidad
 function editItem(codigo) {
-    alert('Función de edición en desarrollo');
+    const item = inventario.find(p => p.codigo === codigo);
+    if (!item) {
+        alert('Producto no encontrado');
+        return;
+    }
+    
+    const nuevoNombre = prompt('Nombre del producto:', item.nombre);
+    if (nuevoNombre === null) return; // Usuario canceló
+    
+    const nuevaCantidad = prompt('Cantidad:', item.cantidad);
+    if (nuevaCantidad === null) return; // Usuario canceló
+    
+    if (confirm(`¿Confirmar cambios?\nNombre: ${nuevoNombre}\nCantidad: ${nuevaCantidad}`)) {
+        // Aquí podrías agregar la lógica para actualizar en la base de datos
+        alert('Función de edición completa en desarrollo. Por ahora solo se puede eliminar productos.');
+    }
 }
 
 function editProvider(id) {
@@ -1288,6 +1311,25 @@ function editProvider(id) {
 
 function editOutput(id) {
     alert('Función de edición de salidas en desarrollo');
+}
+
+/**
+ * Muestra/oculta el campo de factor de conversión según la unidad seleccionada
+ */
+function toggleConversionField() {
+    const unidad = document.getElementById('newUnidad')?.value;
+    const conversionField = document.getElementById('conversionField');
+    
+    if (conversionField) {
+        if (unidad === 'CAJA' || unidad === 'PAQUETE') {
+            conversionField.style.display = 'block';
+            document.getElementById('newFactorConversion').required = true;
+        } else {
+            conversionField.style.display = 'none';
+            document.getElementById('newFactorConversion').required = false;
+            document.getElementById('newFactorConversion').value = '';
+        }
+    }
 }
 
 // ============================================
@@ -1314,6 +1356,7 @@ window.toggleOutputsTable = toggleOutputsTable;
 window.exportOutputsData = exportOutputsData;
 window.editOutput = editOutput;
 window.deleteOutput = deleteOutput;
+window.toggleConversionField = toggleConversionField;
 
 // ============================================
 // INICIALIZACIÓN
