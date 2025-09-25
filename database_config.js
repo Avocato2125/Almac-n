@@ -64,6 +64,7 @@ async function getAllProducts(filters = {}) {
             p.cantidad,
             p.minima as cantidad_minima,
             p.unidad,
+            p.factor_conversion,
             p.precio_compra,
             p.ubicacion,
             p.fecha_entrada,
@@ -118,6 +119,7 @@ async function getProductByCode(codigo) {
             p.cantidad,
             p.minima as cantidad_minima,
             p.unidad,
+            p.factor_conversion,
             p.precio_compra,
             p.ubicacion,
             p.fecha_entrada,
@@ -140,19 +142,19 @@ async function getProductByCode(codigo) {
 
 async function createProduct(productData) {
     const {
-        codigo, nombre, area, cantidad, cantidad_minima, unidad,
+        codigo, nombre, area, cantidad, cantidad_minima, unidad, factor_conversion,
         precio_compra, ubicacion, proveedor_id
     } = productData;
     
     const queryText = `
-        INSERT INTO productos (codigo, nombre, area, cantidad, minima, unidad, 
+        INSERT INTO productos (codigo, nombre, area, cantidad, minima, unidad, factor_conversion,
                              precio_compra, ubicacion, proveedor_id, fecha_entrada)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_DATE)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_DATE)
         RETURNING *
     `;
     
     const result = await query(queryText, [
-        codigo, nombre, area, cantidad, cantidad_minima, unidad,
+        codigo, nombre, area, cantidad, cantidad_minima, unidad, factor_conversion,
         precio_compra, ubicacion, proveedor_id
     ]);
     
@@ -213,15 +215,15 @@ async function getProviderById(id) {
 }
 
 async function createProvider(providerData) {
-    const { nombre, rfc, telefono, email, contacto } = providerData;
+    const { nombre, rfc, telefono, email, contacto, direccion } = providerData;
     
     const queryText = `
-        INSERT INTO proveedores (nombre, rfc, telefono, email, contacto)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO proveedores (nombre, rfc, telefono, email, contacto, direccion)
+        VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *
     `;
     
-    const result = await query(queryText, [nombre, rfc, telefono, email, contacto]);
+    const result = await query(queryText, [nombre, rfc, telefono, email, contacto, direccion]);
     return result.rows[0];
 }
 
@@ -264,7 +266,7 @@ async function getAllOutputs() {
     const queryText = `
         SELECT 
             s.id,
-            s.fecha,
+            s.fecha_salida as fecha,
             s.producto_codigo as codigo_producto,
             p.nombre as nombre_producto,
             s.cantidad,
@@ -276,7 +278,7 @@ async function getAllOutputs() {
             (p.cantidad + s.cantidad) as stock_restante
         FROM salidas s
         LEFT JOIN productos p ON s.producto_codigo = p.codigo
-        ORDER BY s.fecha DESC
+        ORDER BY s.fecha_salida DESC
     `;
     const result = await query(queryText);
     return result.rows;

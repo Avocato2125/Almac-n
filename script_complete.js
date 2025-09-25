@@ -1135,10 +1135,10 @@ function clearOutputForm() {
  * Alterna la visibilidad de la tabla de salidas
  */
 function toggleOutputsTable() {
-    const table = document.getElementById('outputsTable');
-    if (table) {
-        table.classList.toggle('hidden');
-        if (!table.classList.contains('hidden')) {
+    const tableContainer = document.getElementById('outputsTableContainer');
+    if (tableContainer) {
+        tableContainer.classList.toggle('hidden');
+        if (!tableContainer.classList.contains('hidden')) {
             renderOutputsTable();
         }
     }
@@ -1326,7 +1326,7 @@ async function removeProvider(id) {
 }
 
 // Funciones placeholder para compatibilidad
-function editItem(codigo) {
+async function editItem(codigo) {
     const item = inventario.find(p => p.codigo === codigo);
     if (!item) {
         alert('Producto no encontrado');
@@ -1339,14 +1339,103 @@ function editItem(codigo) {
     const nuevaCantidad = prompt('Cantidad:', item.cantidad);
     if (nuevaCantidad === null) return; // Usuario canceló
     
-    if (confirm(`¿Confirmar cambios?\nNombre: ${nuevoNombre}\nCantidad: ${nuevaCantidad}`)) {
-        // Aquí podrías agregar la lógica para actualizar en la base de datos
-        alert('Función de edición completa en desarrollo. Por ahora solo se puede eliminar productos.');
+    const cantidadNum = parseInt(nuevaCantidad);
+    if (isNaN(cantidadNum) || cantidadNum < 0) {
+        alert('Por favor ingresa una cantidad válida');
+        return;
+    }
+    
+    if (confirm(`¿Confirmar cambios?\nNombre: ${nuevoNombre}\nCantidad: ${cantidadNum}`)) {
+        try {
+            const updateData = {
+                nombre: nuevoNombre.trim(),
+                cantidad: cantidadNum
+            };
+            
+            // Actualizar en la base de datos
+            const response = await fetch(`${API_BASE_URL}/productos/${codigo}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updateData)
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                // Actualización local optimista
+                const itemIndex = inventario.findIndex(p => p.codigo === codigo);
+                if (itemIndex !== -1) {
+                    inventario[itemIndex] = { ...inventario[itemIndex], ...updateData };
+                    renderTable();
+                    updateStats();
+                }
+                alert('✅ Producto actualizado exitosamente');
+            } else {
+                throw new Error(result.error || 'Error al actualizar producto');
+            }
+        } catch (error) {
+            console.error('Error al actualizar producto:', error);
+            alert('❌ Error al actualizar producto: ' + error.message);
+        }
     }
 }
 
-function editProvider(id) {
-    alert('Función de edición de proveedores en desarrollo');
+async function editProvider(id) {
+    const proveedor = proveedores.find(p => p.id === id);
+    if (!proveedor) {
+        alert('Proveedor no encontrado');
+        return;
+    }
+    
+    const nuevoNombre = prompt('Nombre del proveedor:', proveedor.nombre);
+    if (nuevoNombre === null) return; // Usuario canceló
+    
+    const nuevoTelefono = prompt('Teléfono:', proveedor.telefono);
+    if (nuevoTelefono === null) return; // Usuario canceló
+    
+    const nuevoEmail = prompt('Email:', proveedor.email);
+    if (nuevoEmail === null) return; // Usuario canceló
+    
+    const nuevaDireccion = prompt('Dirección:', proveedor.direccion || '');
+    if (nuevaDireccion === null) return; // Usuario canceló
+    
+    if (confirm(`¿Confirmar cambios?\nNombre: ${nuevoNombre}\nTeléfono: ${nuevoTelefono}\nEmail: ${nuevoEmail}\nDirección: ${nuevaDireccion}`)) {
+        try {
+            const updateData = {
+                nombre: nuevoNombre.trim(),
+                telefono: nuevoTelefono.trim(),
+                email: nuevoEmail.trim(),
+                direccion: nuevaDireccion.trim()
+            };
+            
+            // Actualizar en la base de datos
+            const response = await fetch(`${API_BASE_URL}/proveedores/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updateData)
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                // Actualización local optimista
+                const proveedorIndex = proveedores.findIndex(p => p.id === id);
+                if (proveedorIndex !== -1) {
+                    proveedores[proveedorIndex] = { ...proveedores[proveedorIndex], ...updateData };
+                    renderProvidersTable();
+                    updateProviderSelect();
+                }
+                alert('✅ Proveedor actualizado exitosamente');
+            } else {
+                throw new Error(result.error || 'Error al actualizar proveedor');
+            }
+        } catch (error) {
+            console.error('Error al actualizar proveedor:', error);
+            alert('❌ Error al actualizar proveedor: ' + error.message);
+        }
+    }
 }
 
 function editOutput(id) {
