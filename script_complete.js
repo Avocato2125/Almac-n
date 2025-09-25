@@ -242,14 +242,52 @@ function debounce(func, delay = 300) {
 }
 
 /**
+ * Formatea una fecha ISO a formato DD/MM/YYYY
+ */
+function formatearFecha(fechaISO) {
+    if (!fechaISO) return "N/A";
+    
+    try {
+        // Si ya está en formato DD/MM/YYYY, devolverla tal como está
+        if (fechaISO.includes('/')) {
+            return fechaISO;
+        }
+        
+        // Convertir de formato ISO (YYYY-MM-DD) a DD/MM/YYYY
+        const fecha = new Date(fechaISO);
+        const dia = fecha.getDate().toString().padStart(2, '0');
+        const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+        const año = fecha.getFullYear();
+        
+        return `${dia}/${mes}/${año}`;
+    } catch (error) {
+        console.error('Error al formatear fecha:', error);
+        return "N/A";
+    }
+}
+
+/**
  * Calcula los días que un producto ha estado en stock
  */
 function calcularDiasEnStock(fecha) {
     if (!fecha) return "N/A";
     
     try {
-        const [dia, mes, año] = fecha.split('/');
-        const fechaEntrada = new Date(año, mes - 1, dia);
+        let fechaEntrada;
+        
+        // Si la fecha está en formato ISO (YYYY-MM-DD)
+        if (fecha.includes('-')) {
+            fechaEntrada = new Date(fecha);
+        } 
+        // Si la fecha está en formato DD/MM/YYYY
+        else if (fecha.includes('/')) {
+            const [dia, mes, año] = fecha.split('/');
+            fechaEntrada = new Date(año, mes - 1, dia);
+        } 
+        else {
+            return "N/A";
+        }
+        
         const hoy = new Date();
         const diferencia = Math.floor((hoy - fechaEntrada) / (1000 * 60 * 60 * 24));
         return diferencia >= 0 ? diferencia + " días" : "N/A";
@@ -322,6 +360,7 @@ function renderTable() {
         const cantidadMinima = item.cantidad_minima || item.cantidadMinima || 2;
         const isLowStock = item.cantidad <= cantidadMinima;
         const alerta = isLowStock ? '<i class="fas fa-exclamation-triangle"></i> STOCK BAJO' : '<i class="fas fa-check-circle"></i> OK';
+        const fechaFormateada = formatearFecha(item.fecha_entrada || item.fecha);
         const diasStock = calcularDiasEnStock(item.fecha_entrada || item.fecha);
         
         const row = document.createElement('tr');
@@ -340,7 +379,7 @@ function renderTable() {
             <td>${item.ubicacion}</td>
             <td>${item.proveedor_nombre || item.proveedor}</td>
             <td>${item.proveedor_telefono || item.contacto}</td>
-            <td>${item.fecha_entrada || item.fecha}</td>
+            <td>${fechaFormateada}</td>
             <td class="${isLowStock ? 'alerta' : ''}">${alerta}</td>
             <td>${diasStock}</td>
             <td>
@@ -639,6 +678,7 @@ function exportData() {
         const cantidadMinima = item.cantidad_minima || item.cantidadMinima || 2;
         const isLowStock = item.cantidad <= cantidadMinima;
         const estado = isLowStock ? 'STOCK BAJO' : 'OK';
+        const fechaFormateada = formatearFecha(item.fecha_entrada || item.fecha);
         const diasStock = calcularDiasEnStock(item.fecha_entrada || item.fecha);
         
         const row = [
@@ -652,7 +692,7 @@ function exportData() {
             item.ubicacion,
             `"${item.proveedor_nombre || item.proveedor}"`,
             item.proveedor_telefono || item.contacto || '',
-            item.fecha_entrada || item.fecha,
+            fechaFormateada,
             estado,
             diasStock
         ];
