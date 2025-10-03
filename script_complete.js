@@ -338,9 +338,9 @@ function formatCurrency(value) {
  * Valida si un valor es una moneda válida
  */
 function validateCurrency(value) {
-    if (!value) return true;
+    if (!value || value.trim() === '') return null;
     const num = parseFloat(value);
-    return !isNaN(num) && num >= 0;
+    return !isNaN(num) && num >= 0 ? num : null;
 }
 
 // ===== FUNCIONES PRINCIPALES =====
