@@ -1047,19 +1047,57 @@ async function registerOutput() {
         return;
     }
     
-    if (cantidad > producto.cantidad) {
-        alert(`No hay suficiente stock. Stock disponible: ${producto.cantidad} ${producto.unidad}`);
+    // Validación de stock considerando factor de conversión
+    const factorConversion = producto.factor_conversion || 1;
+    const stockEnPiezas = producto.cantidad * factorConversion;
+    
+    // Verificar stock total en piezas
+    if (cantidad > stockEnPiezas) {
+        alert(`No hay suficiente stock. Stock disponible: ${stockEnPiezas} piezas (${producto.cantidad} ${producto.unidad})`);
         return;
     }
+    
+    // Validar unidades mínimas para cajas y paquetes
+    if (producto.unidad === 'CAJA' || producto.unidad === 'PAQUETE') {
+        // Verificar que la cantidad solicitada sea múltiplo del factor de conversión
+        if (cantidad % factorConversion !== 0) {
+            const unidadesCompletas = Math.floor(cantidad / factorConversion);
+            const piezasRestantes = cantidad % factorConversion;
+            alert(
+                `No se puede dar salida de ${piezasRestantes} piezas sueltas.\n\n` +
+                `Para ${producto.unidad.toLowerCase()}es, solo se pueden dar salidas en unidades completas.\n\n` +
+                `Stock disponible: ${producto.cantidad} ${producto.unidad} (${stockEnPiezas} piezas)\n` +
+                `Puedes dar salida de: ${unidadesCompletas} ${producto.unidad.toLowerCase()}${unidadesCompletas !== 1 ? 'es' : ''} (${unidadesCompletas * factorConversion} piezas)`
+            );
+            return;
+        }
+        
+        // Verificar que no se exceda el stock en unidades completas
+        const cantidadEnUnidades = cantidad / factorConversion;
+        if (cantidadEnUnidades > producto.cantidad) {
+            alert(
+                `No hay suficientes ${producto.unidad.toLowerCase()}es completas.\n\n` +
+                `Stock disponible: ${producto.cantidad} ${producto.unidad} (${stockEnPiezas} piezas)\n` +
+                `Solicitado: ${cantidadEnUnidades} ${producto.unidad.toLowerCase()}${cantidadEnUnidades !== 1 ? 'es' : ''} (${cantidad} piezas)`
+            );
+            return;
+        }
+    }
+    
+    // Calcular información para la confirmación
+    const cantidadEnUnidades = producto.unidad === 'CAJA' || producto.unidad === 'PAQUETE' ? 
+        cantidad / factorConversion : cantidad;
+    const stockRestanteEnPiezas = stockEnPiezas - cantidad;
+    const stockRestanteEnUnidades = producto.cantidad - cantidadEnUnidades;
     
     // Confirmar la salida
     const confirmacion = confirm(
         `¿Confirmar salida?\n\n` +
         `Producto: ${producto.nombre}\n` +
-        `Cantidad: ${cantidad} ${producto.unidad}\n` +
+        `Cantidad: ${cantidad} piezas${producto.unidad === 'CAJA' || producto.unidad === 'PAQUETE' ? ` (${cantidadEnUnidades} ${producto.unidad.toLowerCase()}${cantidadEnUnidades !== 1 ? 'es' : ''})` : ''}\n` +
         `Responsable: ${responsable}\n` +
         `Área destino: ${areaDestino}\n` +
-        `Stock restante: ${producto.cantidad - cantidad} ${producto.unidad}`
+        `Stock restante: ${stockRestanteEnPiezas} piezas (${stockRestanteEnUnidades} ${producto.unidad})`
     );
     
     if (!confirmacion) return;
@@ -1126,12 +1164,71 @@ function updateOutputProductSelect() {
     select.innerHTML = '<option value="">Seleccionar producto...</option>';
     inventario.forEach(producto => {
         if (producto.cantidad > 0) {
+            const factorConversion = producto.factor_conversion || 1;
+            const stockEnPiezas = producto.cantidad * factorConversion;
+            
+            let stockText = '';
+            if (producto.unidad === 'CAJA' || producto.unidad === 'PAQUETE') {
+                stockText = `${producto.cantidad} ${producto.unidad} (${stockEnPiezas} piezas)`;
+            } else {
+                stockText = `${producto.cantidad} ${producto.unidad}`;
+            }
+            
             const option = document.createElement('option');
             option.value = producto.codigo;
-            option.textContent = `${producto.codigo} - ${producto.nombre} (Stock: ${producto.cantidad} ${producto.unidad})`;
+            option.textContent = `${producto.codigo} - ${producto.nombre} (Stock: ${stockText})`;
             select.appendChild(option);
         }
     });
+}
+
+/**
+ * Actualiza la información del producto seleccionado en el formulario de salidas
+ */
+function updateOutputProductInfo() {
+    const select = document.getElementById('outputProductSelect');
+    const cantidadInput = document.getElementById('outputCantidad');
+    
+    if (!select || !cantidadInput) return;
+    
+    const codigo = select.value;
+    if (!codigo) {
+        // Limpiar placeholder si no hay producto seleccionado
+        cantidadInput.placeholder = 'Cantidad...';
+        return;
+    }
+    
+    const producto = inventario.find(item => item.codigo === codigo);
+    if (!producto) return;
+    
+    const factorConversion = producto.factor_conversion || 1;
+    const stockEnPiezas = producto.cantidad * factorConversion;
+    
+    // Actualizar placeholder con información útil
+    if (producto.unidad === 'CAJA' || producto.unidad === 'PAQUETE') {
+        cantidadInput.placeholder = `Ej: ${factorConversion} (1 ${producto.unidad.toLowerCase()}), ${factorConversion * 2} (2 ${producto.unidad.toLowerCase()}es)...`;
+    } else {
+        cantidadInput.placeholder = `Máximo: ${stockEnPiezas} piezas`;
+    }
+    
+    // Agregar información adicional debajo del campo
+    let infoDiv = document.getElementById('outputProductInfo');
+    if (!infoDiv) {
+        infoDiv = document.createElement('div');
+        infoDiv.id = 'outputProductInfo';
+        infoDiv.style.cssText = 'font-size: 12px; color: #666; margin-top: 5px; padding: 8px; background: #f5f5f5; border-radius: 4px;';
+        cantidadInput.parentNode.appendChild(infoDiv);
+    }
+    
+    let infoText = '';
+    if (producto.unidad === 'CAJA' || producto.unidad === 'PAQUETE') {
+        infoText = `📦 Stock: ${producto.cantidad} ${producto.unidad} (${stockEnPiezas} piezas) | ` +
+                  `💡 Solo se pueden dar salidas en ${producto.unidad.toLowerCase()}es completas de ${factorConversion} piezas cada una`;
+    } else {
+        infoText = `📦 Stock disponible: ${stockEnPiezas} piezas`;
+    }
+    
+    infoDiv.innerHTML = infoText;
 }
 
 /**
@@ -1147,11 +1244,23 @@ function updateOutputProductInfo() {
     const producto = inventario.find(item => item.codigo === codigo);
     
     if (producto) {
+        const factorConversion = producto.factor_conversion || 1;
+        const stockEnPiezas = producto.cantidad * factorConversion;
+        
+        let stockInfo = '';
+        if (producto.unidad === 'CAJA' || producto.unidad === 'PAQUETE') {
+            stockInfo = `${producto.cantidad} ${producto.unidad} (${stockEnPiezas} piezas)`;
+        } else {
+            stockInfo = `${producto.cantidad} ${producto.unidad}`;
+        }
+        
         infoDiv.innerHTML = `
             <div class="product-info">
                 <strong>${producto.nombre}</strong><br>
-                Stock disponible: <span class="stock-info">${producto.cantidad} ${producto.unidad}</span><br>
-                Área: ${producto.area} | Ubicación: ${producto.ubicacion}
+                📦 Stock disponible: <span class="stock-info">${stockInfo}</span><br>
+                📍 Área: ${producto.area} | Ubicación: ${producto.ubicacion}
+                ${producto.unidad === 'CAJA' || producto.unidad === 'PAQUETE' ? 
+                    `<br>💡 <strong>Importante:</strong> Solo se pueden dar salidas en ${producto.unidad.toLowerCase()}es completas de ${factorConversion} piezas cada una` : ''}
             </div>
         `;
         infoDiv.style.display = 'block';
