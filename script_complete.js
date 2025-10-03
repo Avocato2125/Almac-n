@@ -346,8 +346,14 @@ function cleanCurrencyFormat(value) {
  * Valida si un valor es una moneda válida
  */
 function validateCurrency(value) {
-    if (!value || value.trim() === '') return null;
-    const cleanValue = cleanCurrencyFormat(value);
+    if (!value || value === null || value === undefined) return null;
+    
+    // Convertir a string si no lo es
+    const stringValue = String(value);
+    
+    if (stringValue.trim() === '') return null;
+    
+    const cleanValue = cleanCurrencyFormat(stringValue);
     const num = parseFloat(cleanValue);
     return !isNaN(num) && num >= 0 ? num : null;
 }
@@ -1419,31 +1425,25 @@ async function saveEditProduct() {
     const proveedorId = productoActual.proveedor_id || null;
     
     // Validaciones
-    console.log('Validaciones - Valores obtenidos:', { nombre, cantidad, minima, factorConversion, precioStr });
-    
     if (!nombre) {
-        console.log('Error: Nombre vacío');
         alert('Por favor ingresa el nombre del producto');
         document.getElementById('editProductNombre').focus();
         return;
     }
     
     if (isNaN(cantidad) || cantidad < 0) {
-        console.log('Error: Cantidad inválida', { cantidad, isNaN: isNaN(cantidad) });
         alert('Por favor ingresa una cantidad válida');
         document.getElementById('editProductCantidad').focus();
         return;
     }
     
     if (isNaN(minima) || minima < 1) {
-        console.log('Error: Cantidad mínima inválida', { minima, isNaN: isNaN(minima) });
         alert('Por favor ingresa una cantidad mínima válida');
         document.getElementById('editProductMinima').focus();
         return;
     }
     
     if (isNaN(factorConversion) || factorConversion < 1) {
-        console.log('Error: Factor de conversión inválido', { factorConversion, isNaN: isNaN(factorConversion) });
         alert('Por favor ingresa un factor de conversión válido');
         document.getElementById('editProductFactor').focus();
         return;
@@ -1451,7 +1451,6 @@ async function saveEditProduct() {
     
     // Validar y formatear precio
     const precio = validateCurrency(precioStr);
-    console.log('Validación de precio:', { precioStr, precio, tipo: typeof precio });
     if (precio === null && precioStr.trim() !== '') {
         alert('Por favor ingresa un precio válido');
         document.getElementById('editProductPrecio').focus();
