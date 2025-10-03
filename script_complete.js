@@ -16,6 +16,23 @@ let nextOutputId = 1;
 // ===== FUNCIONES PARA CONECTAR CON LA API =====
 
 /**
+ * Recarga todos los datos desde el servidor para sincronizar
+ */
+async function reloadDataFromServer() {
+    try {
+        console.log('🔄 Recargando datos desde el servidor...');
+        await loadDataFromDatabase();
+        renderTable();
+        renderOutputsTable();
+        updateStats();
+        console.log('✅ Datos recargados exitosamente');
+    } catch (error) {
+        console.error('❌ Error al recargar datos:', error);
+        alert('Error al recargar datos desde el servidor');
+    }
+}
+
+/**
  * Carga todos los datos desde la base de datos
  */
 async function loadDataFromDatabase(filters = {}) {
@@ -1225,18 +1242,30 @@ async function deleteOutput(id) {
                 // 4. Elimina la salida del array local
                 salidas.splice(salidaIndex, 1);
             }
-            
-            // 5. Actualiza la interfaz
-            renderTable();
-            renderOutputsTable();
-            updateStats();
-            
-            alert('✅ Salida eliminada y stock restaurado');
-            
         } catch (error) {
-            console.error('Error al eliminar salida:', error);
-            alert('❌ Error al eliminar salida: ' + error.message);
+            // Si la salida no existe en el servidor (404), eliminarla localmente
+            if (error.message.includes('Salida no encontrada') || error.message.includes('404')) {
+                console.log('Salida no encontrada en el servidor, eliminando localmente...');
+                
+                // Buscar y eliminar la salida del array local
+                const salidaIndex = salidas.findIndex(s => s.id === id);
+                if (salidaIndex !== -1) {
+                    salidas.splice(salidaIndex, 1);
+                    console.log('Salida eliminada localmente');
+                }
+            } else {
+                // Para otros errores, mostrar el mensaje de error
+                alert('Error al eliminar salida: ' + error.message);
+                return;
+            }
         }
+        
+        // 5. Actualiza la interfaz
+        renderTable();
+        renderOutputsTable();
+        updateStats();
+        
+        alert('✅ Salida eliminada y stock restaurado');
     }
 }
 
